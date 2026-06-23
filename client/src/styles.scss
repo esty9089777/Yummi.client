@@ -1,0 +1,35 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$yummi-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$orange-palette,
+    tertiary: mat.$red-palette,
+  ),
+  density: (scale: 0),
+));
+
+html {
+  @include mat.all-component-themes($yummi-theme);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Global resets & base styles                                         */
+/* ------------------------------------------------------------------ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: Roboto, sans-serif;
+  background-color: #fafafa;
+  color: #212121;
+}
