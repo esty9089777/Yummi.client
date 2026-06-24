@@ -46,3 +46,43 @@ export interface ILoginDto {
 export interface ISwitchRoleDto {
   activeRole: UserRole;
 }
+
+/** Sent to PATCH /auth/me */
+export interface IUpdateProfileDto {
+  fullName?: string;
+  phone?: string;
+  defaultAddress?: IDefaultAddress | null;
+}
+
+/** Sent to POST /users/employees */
+export interface ICreateEmployeeDto {
+  fullName: string;
+  email: string;
+  password: string;
+  phone: string;
+  roles: UserRole[];
+  defaultAddress?: IDefaultAddress;
+}
+
+/** Sent to PATCH /users/:id/roles */
+export interface IUpdateRolesDto {
+  roles: UserRole[];
+}
+
+/** Sent to POST /users/:id/roles/add */
+export interface IAddRoleDto {
+  role: UserRole;
+}
+
+/** Sent to PATCH /users/:id/status */
+export interface IUpdateStatusDto {
+  isActive: boolean;
+}
+
+export interface IUserResponse {
+  user: IUser;
+}
+
+export interface IUsersResponse {
+  users: IUser[];
+}

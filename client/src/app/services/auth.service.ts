@@ -13,6 +13,7 @@ import {
   IMeResponse,
   IRegisterDto,
   ISwitchRoleDto,
+  IUpdateProfileDto,
   IUser,
 } from '../core/models/user.model';
 import { UserRole } from '../core/models/enums';
@@ -34,6 +35,10 @@ export class AuthService {
   readonly isLoggedIn = computed(() => this._currentUser() !== null);
 
   private sessionInitPromise: Promise<void> | null = null;
+
+  constructor() {
+    this.api.registerUnauthorizedHandler(() => this.logout());
+  }
 
   // ---------------------------------------------------------------------------
   // Public API
@@ -96,6 +101,17 @@ export class AuthService {
     );
     const { token, user } = this.api.unwrap(res);
     this._applySession(token, user);
+  }
+
+  /**
+   * Updates the authenticated user's profile fields.
+   */
+  async updateProfile(dto: IUpdateProfileDto): Promise<IUser> {
+    const res = await this.api.http.patch<ApiResponse<IMeResponse>>('/auth/me', dto);
+    const { user } = this.api.unwrap(res);
+    const token = getBrowserStorageItem(TOKEN_KEY) ?? '';
+    this._applySession(token, user);
+    return user;
   }
 
   /**

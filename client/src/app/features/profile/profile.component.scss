@@ -1,0 +1,55 @@
+.profile-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.profile-form,
+.address-fields,
+.role-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.role-switch {
+  max-width: 320px;
+}
+
+.admin-card {
+  mat-card-actions {
+    padding: 0 1rem 1rem;
+  }
+}
+
+.success-message {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  font-size: 0.875rem;
+}
+
+.error-message {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  background-color: #fdecea;
+  color: #b71c1c;
+  font-size: 0.875rem;
+}
