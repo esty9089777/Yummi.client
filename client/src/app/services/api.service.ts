@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { environment } from '../../environments/environment';
 import { authRequestInterceptor, TOKEN_KEY } from '../core/interceptors/auth.interceptor';
+import { removeBrowserStorageItem } from '../core/utils/browser-storage.util';
 import type { ApiResponse } from '../core/models/api-response.model';
 
 @Injectable({ providedIn: 'root' })
@@ -21,7 +22,7 @@ export class ApiService {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          localStorage.removeItem(TOKEN_KEY);
+          removeBrowserStorageItem(TOKEN_KEY);
         }
         return Promise.reject(error);
       },
