@@ -46,6 +46,14 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
   },
   {
+    path: 'admin/delivery-zones',
+    loadComponent: () =>
+      import('./features/admin/delivery-zones/delivery-zone-management.component').then(
+        (m) => m.DeliveryZoneManagementComponent,
+      ),
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
+  },
+  {
     path: 'menu',
     loadComponent: () =>
       import('./features/menu/menu.component').then((m) => m.MenuComponent),
