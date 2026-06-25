@@ -38,3 +38,11 @@ export interface IOrder {
 export interface IOrdersResponse {
   orders: IOrder[];
 }
+
+export interface ICreateOrderDto {
+  orderType: OrderType;
+  /** Required when orderType === DELIVERY. */
+  deliveryCity?: string;
+  /** Required when orderType === DELIVERY. */
+  deliveryAddress?: string;
+}

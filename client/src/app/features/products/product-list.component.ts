@@ -14,7 +14,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ProductService } from '../../services/product.service';
 import { CategoryService } from '../../services/category.service';
 import { AuthService } from '../../services/auth.service';
 import { IProduct } from '../../core/models/product.model';
@@ -40,7 +39,6 @@ import { Subscription } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductListComponent implements OnDestroy {
-  private readonly productService = inject(ProductService);
   private readonly categoryService = inject(CategoryService);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
@@ -48,6 +46,7 @@ export class ProductListComponent implements OnDestroy {
 
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private paramSub: Subscription | null = null;
+  private allProducts: IProduct[] = [];
 
   readonly products = signal<IProduct[]>([]);
   readonly category = signal<ICategory | null>(null);
@@ -80,12 +79,12 @@ export class ProductListComponent implements OnDestroy {
   onSearchChange(value: string): void {
     this.searchTerm.set(value);
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
-    this.debounceTimer = setTimeout(() => void this.reloadProducts(), 350);
+    this.debounceTimer = setTimeout(() => this.applySearchFilter(), 350);
   }
 
   clearSearch(): void {
     this.searchTerm.set('');
-    void this.reloadProducts();
+    this.applySearchFilter();
   }
 
   /** Loads category metadata and products filtered by route param id. */
@@ -94,6 +93,7 @@ export class ProductListComponent implements OnDestroy {
     this.errorMessage.set(null);
     this.category.set(null);
     this.products.set([]);
+    this.allProducts = [];
 
     try {
       await this.auth.ensureSessionInitialized();
@@ -101,11 +101,9 @@ export class ProductListComponent implements OnDestroy {
       const category = await this.categoryService.getById(categoryId);
       this.category.set(category);
 
-      const items = await this.productService.getAll({
-        categoryId,
-        search: this.searchTerm() || undefined,
-      });
-      this.products.set(items);
+      const items = await this.categoryService.listProducts(categoryId);
+      this.allProducts = items;
+      this.products.set(this.filterProducts(items));
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Failed to load category products.'));
     } finally {
@@ -113,30 +111,20 @@ export class ProductListComponent implements OnDestroy {
     }
   }
 
-  /** Re-fetches products for the current category (search filter changes). */
-  private async reloadProducts(): Promise<void> {
-    const categoryId = this.categoryId();
-    if (!categoryId) {
-      this.isLoading.set(false);
-      return;
-    }
+  /** Applies the current search term to the cached product list. */
+  private applySearchFilter(): void {
+    this.products.set(this.filterProducts(this.allProducts));
+  }
 
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
+  private filterProducts(products: IProduct[]): IProduct[] {
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) return products;
 
-    try {
-      await this.auth.ensureSessionInitialized();
-
-      const items = await this.productService.getAll({
-        categoryId,
-        search: this.searchTerm() || undefined,
-      });
-      this.products.set(items);
-    } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error, 'Failed to load products.'));
-    } finally {
-      this.isLoading.set(false);
-    }
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(term) ||
+        product.description?.toLowerCase().includes(term),
+    );
   }
 
   navigateToProduct(productId: string): void {

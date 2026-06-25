@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { AuthService } from '../../../services/auth.service';
 import { NotificationService } from '../../../services/notification.service';
+import { CartService } from '../../../services/cart.service';
 import { SocketService } from '../../../core/services/socket.service';
 import { UserRole } from '../../../core/models/enums';
 
@@ -27,6 +28,7 @@ import { UserRole } from '../../../core/models/enums';
 export class NavComponent {
   private readonly auth = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
+  private readonly cartService = inject(CartService);
   private readonly socketService = inject(SocketService);
   private readonly router = inject(Router);
 
@@ -34,8 +36,20 @@ export class NavComponent {
   readonly activeRole = this.auth.activeRole;
   readonly currentUser = this.auth.currentUser;
   readonly unreadCount = this.notificationService.unreadCount;
+  readonly cartCount = this.cartService.itemCount;
 
   readonly UserRole = UserRole;
+
+  constructor() {
+    // Keep the cart badge in sync: load the cart whenever a customer session is active.
+    effect(() => {
+      if (this.activeRole() === UserRole.CUSTOMER) {
+        void this.cartService.load().catch(() => undefined);
+      } else {
+        this.cartService.reset();
+      }
+    });
+  }
 
   isRole(...roles: UserRole[]): boolean {
     const role = this.activeRole();
@@ -44,6 +58,7 @@ export class NavComponent {
 
   logout(): void {
     this.socketService.disconnect();
+    this.cartService.reset();
     this.auth.logout();
     void this.router.navigate(['/login']);
   }

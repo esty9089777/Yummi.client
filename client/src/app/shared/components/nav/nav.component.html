@@ -19,7 +19,14 @@
       </a>
 
       @if (isRole(UserRole.CUSTOMER)) {
-        <a mat-button routerLink="/cart" routerLinkActive="nav-active">
+        <a
+          mat-button
+          routerLink="/cart"
+          routerLinkActive="nav-active"
+          [matBadge]="cartCount() > 0 ? cartCount() : null"
+          matBadgeColor="accent"
+          matBadgeSize="small"
+        >
           <mat-icon>shopping_cart</mat-icon>
           Cart
         </a>

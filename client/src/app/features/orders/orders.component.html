@@ -1,4 +1,118 @@
-<section class="orders-feature">
-  <h2>Orders</h2>
-  <p>Orders feature – to be implemented.</p>
+<section class="orders-page">
+  <header class="page-header">
+    <h1>
+      <mat-icon>receipt_long</mat-icon>
+      My orders
+    </h1>
+    <a mat-button routerLink="/menu" class="back-link">
+      <mat-icon>menu_book</mat-icon> Order more
+    </a>
+  </header>
+
+  @if (justPlacedId(); as placedId) {
+    <div class="success-banner" role="status">
+      <mat-icon>check_circle</mat-icon>
+      <span>Order <strong>#{{ shortId(placedId) }}</strong> placed successfully!</span>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <p class="error-message" role="alert">{{ error }}</p>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (orders().length === 0) {
+    <div class="empty-state">
+      <mat-icon>receipt_long</mat-icon>
+      <p>You haven't placed any orders yet.</p>
+      <a mat-flat-button color="primary" routerLink="/menu">Browse the menu</a>
+    </div>
+  } @else {
+    <div class="orders-list">
+      @for (order of orders(); track order._id) {
+        <mat-card class="order-card" [class.order-card--new]="order._id === justPlacedId()">
+          <div class="order-head">
+            <div class="order-meta">
+              <span class="order-id">#{{ shortId(order._id) }}</span>
+              <span class="order-date">{{ order.createdAt | date: 'medium' }}</span>
+            </div>
+            <span class="status-chip" [class]="statusClass(order.status)">{{ order.status }}</span>
+          </div>
+
+          <div class="order-type">
+            <mat-icon>{{ order.orderType === OrderType.DELIVERY ? 'delivery_dining' : 'store' }}</mat-icon>
+            <span>{{ order.orderType === OrderType.DELIVERY ? 'Delivery' : 'Pickup' }}</span>
+            @if (order.orderType === OrderType.DELIVERY && order.deliveryCity) {
+              <span class="order-address">
+                — {{ order.deliveryAddress }}, {{ order.deliveryCity }}
+              </span>
+            }
+          </div>
+
+          @if (order.orderType === OrderType.DELIVERY && order.estimatedDeliveryTime) {
+            <p class="order-eta">
+              <mat-icon>schedule</mat-icon>
+              Estimated delivery: {{ order.estimatedDeliveryTime | date: 'shortTime' }}
+            </p>
+          }
+
+          <mat-divider />
+
+          <ul class="order-items">
+            @for (item of order.items; track item.productId + item.name) {
+              <li>
+                <span class="line-name">{{ item.quantity }}× {{ item.name }}</span>
+                @if (item.selectedExtras.length > 0) {
+                  <span class="line-extras">
+                    ({{ item.selectedExtras.length }} extra{{ item.selectedExtras.length > 1 ? 's' : '' }})
+                  </span>
+                }
+                <span class="line-price">{{ formatPrice(item.totalPrice) }}</span>
+              </li>
+            }
+          </ul>
+
+          <mat-divider />
+
+          <div class="order-totals">
+            <div class="totals-row">
+              <span>Subtotal</span>
+              <span>{{ formatPrice(order.subtotal) }}</span>
+            </div>
+            @if (order.deliveryFee > 0) {
+              <div class="totals-row">
+                <span>Delivery fee</span>
+                <span>{{ formatPrice(order.deliveryFee) }}</span>
+              </div>
+            }
+            <div class="totals-row totals-row--grand">
+              <span>Total</span>
+              <span>{{ formatPrice(order.total) }}</span>
+            </div>
+          </div>
+
+          @if (order.status === OrderStatus.CANCELLED && order.cancellationReason) {
+            <p class="cancel-reason">Cancelled: {{ order.cancellationReason }}</p>
+          }
+
+          @if (canCancel(order)) {
+            <div class="order-actions">
+              <button
+                mat-stroked-button
+                color="warn"
+                [disabled]="cancellingId() === order._id"
+                (click)="cancel(order)"
+              >
+                <mat-icon>cancel</mat-icon>
+                Cancel order
+              </button>
+            </div>
+          }
+        </mat-card>
+      }
+    </div>
+  }
 </section>

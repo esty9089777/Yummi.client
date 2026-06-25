@@ -1,0 +1,109 @@
+<section class="cart-page">
+  <header class="page-header">
+    <h1>
+      <mat-icon>shopping_cart</mat-icon>
+      Your cart
+    </h1>
+    <a mat-button routerLink="/menu" class="back-link">
+      <mat-icon>arrow_back</mat-icon> Continue shopping
+    </a>
+  </header>
+
+  @if (errorMessage(); as error) {
+    <p class="error-message" role="alert">{{ error }}</p>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (isEmpty()) {
+    <div class="empty-state">
+      <mat-icon>remove_shopping_cart</mat-icon>
+      <p>Your cart is empty.</p>
+      <a mat-flat-button color="primary" routerLink="/menu">Browse the menu</a>
+    </div>
+  } @else {
+    <div class="cart-layout">
+      <div class="cart-items">
+        @for (item of items(); track item._id) {
+          <mat-card class="cart-item">
+            <div class="item-image-wrap">
+              @if (item.productId.image) {
+                <img [src]="item.productId.image" [alt]="item.productId.name" class="item-image" />
+              } @else {
+                <div class="item-image item-image--placeholder">
+                  <mat-icon>restaurant</mat-icon>
+                </div>
+              }
+            </div>
+
+            <div class="item-info">
+              <h3 class="item-name">{{ item.productId.name }}</h3>
+              <p class="item-unit-price">{{ formatPrice(item.productId.price) }} each</p>
+
+              @if (item.selectedExtras.length > 0) {
+                <div class="item-extras">
+                  <span class="extras-label">Extras:</span>
+                  <mat-chip-set>
+                    @for (extra of item.selectedExtras; track extra._id) {
+                      <mat-chip>{{ extra.name }}</mat-chip>
+                    }
+                  </mat-chip-set>
+                </div>
+              }
+            </div>
+
+            <div class="item-actions">
+              <div class="quantity-control">
+                <button
+                  mat-icon-button
+                  aria-label="Decrease quantity"
+                  [disabled]="busyItemId() === item._id"
+                  (click)="changeQuantity(item, -1)"
+                >
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span class="quantity-value">{{ item.quantity }}</span>
+                <button
+                  mat-icon-button
+                  aria-label="Increase quantity"
+                  [disabled]="busyItemId() === item._id"
+                  (click)="changeQuantity(item, 1)"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+
+              <p class="item-line-total">{{ formatPrice(lineTotal(item)) }}</p>
+
+              <button
+                mat-button
+                color="warn"
+                [disabled]="busyItemId() === item._id"
+                (click)="remove(item)"
+              >
+                <mat-icon>delete</mat-icon>
+                Remove
+              </button>
+            </div>
+          </mat-card>
+        }
+      </div>
+
+      <mat-card class="cart-summary">
+        <h2>Order summary</h2>
+        <mat-divider />
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>{{ formatPrice(subtotal()) }}</span>
+        </div>
+        <p class="summary-hint">Delivery fee (if any) is calculated at checkout.</p>
+        <a mat-flat-button color="primary" routerLink="/checkout" class="checkout-btn">
+          Proceed to checkout
+          <mat-icon>arrow_forward</mat-icon>
+        </a>
+      </mat-card>
+    </div>
+  }
+</section>

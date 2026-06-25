@@ -68,6 +68,14 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'categories/:id',
+    loadComponent: () =>
+      import('./features/products/product-list.component').then(
+        (m) => m.ProductListComponent,
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: 'products',
     redirectTo: 'menu',
     pathMatch: 'full',
@@ -79,6 +87,18 @@ export const routes: Routes = [
         (m) => m.ProductDetailComponent,
       ),
     canActivate: [authGuard],
+  },
+  {
+    path: 'cart',
+    loadComponent: () =>
+      import('./features/cart/cart.component').then((m) => m.CartComponent),
+    canActivate: [authGuard, roleGuard(UserRole.CUSTOMER)],
+  },
+  {
+    path: 'checkout',
+    loadComponent: () =>
+      import('./features/checkout/checkout.component').then((m) => m.CheckoutComponent),
+    canActivate: [authGuard, roleGuard(UserRole.CUSTOMER)],
   },
   {
     path: 'orders',
