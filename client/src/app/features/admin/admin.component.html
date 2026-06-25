@@ -1,4 +1,20 @@
 <section class="admin-feature">
-  <h2>Admin</h2>
-  <p>Admin dashboard feature – to be implemented.</p>
+  <header class="admin-header">
+    <h1>Admin</h1>
+    <a mat-button routerLink="/">Back to Home</a>
+  </header>
+
+  <p>Admin dashboard — additional modules will be added here.</p>
+
+  @if (isAdmin()) {
+    <div class="admin-links">
+      <a mat-flat-button color="primary" routerLink="/admin/employees">
+        Manage employees
+      </a>
+      <a mat-flat-button color="primary" routerLink="/admin/categories">
+        Manage categories
+      </a>
+      <a mat-stroked-button routerLink="/profile">My profile</a>
+    </div>
+  }
 </section>

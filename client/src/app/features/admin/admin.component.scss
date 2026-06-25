@@ -1,3 +1,16 @@
 .admin-feature {
   padding: 1rem;
 }
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.admin-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
