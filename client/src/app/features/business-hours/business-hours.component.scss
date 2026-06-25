@@ -1,0 +1,222 @@
+.bh-page {
+  padding: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.bh-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h1 {
+    margin: 0 0 0.25rem;
+  }
+
+  p {
+    margin: 0;
+    color: #555;
+  }
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.success-message {
+  color: #2e7d32;
+  margin-bottom: 0.75rem;
+}
+
+.error-message {
+  color: #c62828;
+  margin-bottom: 0.75rem;
+}
+
+/* Status banner */
+.status-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+
+  mat-icon {
+    font-size: 1.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+}
+
+.status-open {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+  border-left: 4px solid #43a047;
+}
+
+.status-closed {
+  background-color: #fce4ec;
+  color: #b71c1c;
+  border-left: 4px solid #e53935;
+}
+
+.status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  strong {
+    font-size: 1rem;
+  }
+
+  span {
+    font-size: 0.875rem;
+  }
+
+  .status-time {
+    font-size: 0.8rem;
+    opacity: 0.75;
+  }
+}
+
+/* Weekly schedule card */
+.schedule-card {
+  margin-bottom: 1.25rem;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #ececec;
+    vertical-align: middle;
+  }
+
+  th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.col-day {
+  width: 130px;
+  font-weight: 500;
+}
+
+.col-closed {
+  width: 90px;
+}
+
+.col-time {
+  width: 140px;
+}
+
+.row-closed td {
+  color: #999;
+}
+
+.time-input {
+  font-size: 0.95rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+
+  &:focus {
+    outline: 2px solid #e65100;
+    border-color: transparent;
+  }
+}
+
+.na-label {
+  color: #bbb;
+  font-size: 0.9rem;
+  padding-left: 0.5rem;
+}
+
+/* Special days card */
+.special-days-card {
+  margin-bottom: 1.25rem;
+}
+
+.form-heading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: #333;
+}
+
+.special-day-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 620px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #ececec;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.field-date {
+  flex: 1 1 180px;
+}
+
+.field-label {
+  width: 100%;
+}
+
+.field-time {
+  flex: 1 1 150px;
+}
+
+.closed-toggle {
+  margin: 0.25rem 0;
+}
+
+.special-days-table {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.empty-state {
+  color: #666;
+  padding: 0.75rem 0;
+}
+
+.hours-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.hours-closed {
+  background-color: #fce4ec;
+  color: #c62828;
+}
+
+.hours-open {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}

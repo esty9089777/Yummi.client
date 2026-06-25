@@ -54,6 +54,14 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
   },
   {
+    path: 'business-hours',
+    loadComponent: () =>
+      import('./features/business-hours/business-hours.component').then(
+        (m) => m.BusinessHoursComponent,
+      ),
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
+  },
+  {
     path: 'menu',
     loadComponent: () =>
       import('./features/menu/menu.component').then((m) => m.MenuComponent),
