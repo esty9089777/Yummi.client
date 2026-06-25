@@ -46,7 +46,7 @@ export class DeliveryZonesComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
 
-  readonly zones = this.zoneService.zones;
+  readonly zones = signal<IDeliveryZone[]>([]);
   readonly isAdmin = computed(() => this.auth.activeRole() === UserRole.ADMIN);
 
   readonly isLoading = signal(true);
@@ -76,9 +76,16 @@ export class DeliveryZonesComponent implements OnInit {
     estimatedDeliveryMinutes: [30, [Validators.required, Validators.min(1)]],
   });
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
+    void this.loadZones();
+  }
+
+  async loadZones(): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
     try {
-      await this.zoneService.getAll();
+      const items = await this.zoneService.getAll();
+      this.zones.set(items);
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Failed to load delivery zones.'));
     } finally {
@@ -129,6 +136,7 @@ export class DeliveryZonesComponent implements OnInit {
       this.createForm.reset({ city: '', deliveryPrice: 0, estimatedDeliveryMinutes: 30 });
       this.showCreateForm.set(false);
       this.successMessage.set('Delivery zone created.');
+      await this.loadZones();
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Failed to create delivery zone.'));
     } finally {
@@ -149,13 +157,14 @@ export class DeliveryZonesComponent implements OnInit {
     const { city, deliveryPrice, estimatedDeliveryMinutes } = this.editForm.getRawValue();
 
     try {
-      await this.zoneService.update(zone._id, {
+      await this.zoneService.update(zone.id, {
         city: city.trim(),
         deliveryPrice: Number(deliveryPrice),
         estimatedDeliveryMinutes: Number(estimatedDeliveryMinutes),
       });
       this.editingZone.set(null);
       this.successMessage.set('Delivery zone updated.');
+      await this.loadZones();
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Failed to update delivery zone.'));
     } finally {
@@ -164,10 +173,11 @@ export class DeliveryZonesComponent implements OnInit {
   }
 
   async onToggleStatus(zone: IDeliveryZone): Promise<void> {
-    this.togglingId.set(zone._id);
+    this.togglingId.set(zone.id);
     this.clearMessages();
     try {
-      await this.zoneService.setStatus(zone._id, !zone.isActive);
+      await this.zoneService.setStatus(zone.id, { isActive: !zone.isActive });
+      await this.loadZones();
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Failed to update status.'));
     } finally {
@@ -179,14 +189,15 @@ export class DeliveryZonesComponent implements OnInit {
     if (!confirm(`Delete delivery zone for "${zone.city}"? This cannot be undone.`)) {
       return;
     }
-    this.deletingId.set(zone._id);
+    this.deletingId.set(zone.id);
     this.clearMessages();
     try {
-      await this.zoneService.delete(zone._id);
+      await this.zoneService.delete(zone.id);
       this.successMessage.set(`Zone "${zone.city}" deleted.`);
-      if (this.editingZone()?._id === zone._id) {
+      if (this.editingZone()?.id === zone.id) {
         this.cancelEdit();
       }
+      await this.loadZones();
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Failed to delete delivery zone.'));
     } finally {
