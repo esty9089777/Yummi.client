@@ -1,0 +1,87 @@
+@if (isLoggedIn()) {
+  <mat-toolbar color="primary" class="nav-toolbar">
+    <a mat-button routerLink="/" class="nav-brand">
+      <mat-icon>restaurant</mat-icon>
+      <span>Yummi</span>
+    </a>
+
+    <span class="nav-spacer"></span>
+
+    <nav class="nav-links">
+      <a mat-button routerLink="/" routerLinkActive="nav-active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>home</mat-icon>
+        Home
+      </a>
+
+      @if (isRole(UserRole.CUSTOMER)) {
+        <a mat-button routerLink="/menu" routerLinkActive="nav-active">
+          <mat-icon>menu_book</mat-icon>
+          Menu
+        </a>
+        <a mat-button routerLink="/cart" routerLinkActive="nav-active">
+          <mat-icon>shopping_cart</mat-icon>
+          Cart
+        </a>
+      }
+
+      <a mat-button routerLink="/orders" routerLinkActive="nav-active">
+        <mat-icon>receipt_long</mat-icon>
+        Orders
+      </a>
+
+      @if (isRole(UserRole.KITCHEN, UserRole.ADMIN)) {
+        <a mat-button routerLink="/kitchen" routerLinkActive="nav-active">
+          <mat-icon>soup_kitchen</mat-icon>
+          Kitchen
+        </a>
+      }
+
+      @if (isRole(UserRole.DELIVERY, UserRole.ADMIN)) {
+        <a mat-button routerLink="/delivery" routerLinkActive="nav-active">
+          <mat-icon>delivery_dining</mat-icon>
+          Delivery
+        </a>
+      }
+
+      @if (isRole(UserRole.ADMIN)) {
+        <a mat-button routerLink="/admin/categories" routerLinkActive="nav-active">
+          <mat-icon>category</mat-icon>
+          Categories
+        </a>
+        <a mat-button routerLink="/admin/employees" routerLinkActive="nav-active">
+          <mat-icon>groups</mat-icon>
+          Employees
+        </a>
+        <a mat-button routerLink="/delivery-zones" routerLinkActive="nav-active">
+          <mat-icon>map</mat-icon>
+          Zones
+        </a>
+        <a mat-button routerLink="/business-hours" routerLinkActive="nav-active">
+          <mat-icon>schedule</mat-icon>
+          Hours
+        </a>
+      }
+
+      <a
+        mat-button
+        routerLink="/notifications"
+        routerLinkActive="nav-active"
+        [matBadge]="unreadCount() > 0 ? unreadCount() : null"
+        matBadgeColor="warn"
+        matBadgeSize="small"
+      >
+        <mat-icon>notifications</mat-icon>
+        Alerts
+      </a>
+
+      <a mat-button routerLink="/profile" routerLinkActive="nav-active">
+        <mat-icon>person</mat-icon>
+        Profile
+      </a>
+    </nav>
+
+    <button mat-icon-button (click)="logout()" title="Sign out" class="nav-logout">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </mat-toolbar>
+}

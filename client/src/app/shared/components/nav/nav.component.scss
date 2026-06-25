@@ -1,0 +1,44 @@
+.nav-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 0.25rem;
+}
+
+.nav-brand {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+}
+
+.nav-spacer {
+  flex: 1;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+  }
+}
+
+.nav-active {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-radius: 4px;
+}
+
+.nav-logout {
+  margin-left: 0.5rem;
+}

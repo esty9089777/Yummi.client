@@ -16,8 +16,19 @@ export class SocketService {
 
   readonly socketUrl = environment.socketUrl;
 
-  // TODO: implement connect(token: string)
-  // TODO: implement disconnect()
-  // TODO: implement on<T>(event: string, handler: (payload: T) => void)
-  // TODO: implement off(event: string)
+  connect(_token: string): void {
+    // TODO: implement Socket.IO connect
+  }
+
+  disconnect(): void {
+    this._connected.set(false);
+  }
+
+  on<T>(_event: string, _handler: (payload: T) => void): void {
+    // TODO: implement event listener
+  }
+
+  off(_event: string): void {
+    // TODO: implement event removal
+  }
 }
