@@ -4,12 +4,7 @@
     <p>Signed in as <strong>{{ activeRole() }}</strong></p>
   }
 
-  <div class="home-actions">
-    <a mat-flat-button color="primary" routerLink="/menu">Browse Menu</a>
-    <a mat-stroked-button routerLink="/profile">My Profile</a>
-    @if (isAdmin()) {
-      <a mat-stroked-button routerLink="/admin">Admin Dashboard</a>
-    }
-    <button mat-stroked-button type="button" (click)="logout()">Sign out</button>
-  </div>
+  <button mat-stroked-button type="button" (click)="logout()">
+    Sign out
+  </button>
 </section>
