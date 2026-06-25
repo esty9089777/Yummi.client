@@ -64,6 +64,14 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'delivery-zones',
+    loadComponent: () =>
+      import('./features/delivery-zones/delivery-zones.component').then(
+        (m) => m.DeliveryZonesComponent,
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: 'admin',
     loadComponent: () =>
       import('./features/admin/admin.component').then((m) => m.AdminComponent),

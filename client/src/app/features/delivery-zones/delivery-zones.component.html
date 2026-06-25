@@ -1,0 +1,204 @@
+<section class="dz-page">
+  <div class="page-header">
+    <h1 class="page-title">Delivery Zones</h1>
+    @if (isAdmin()) {
+      <button mat-flat-button (click)="toggleCreateForm()">
+        <mat-icon>{{ showCreateForm() ? 'close' : 'add' }}</mat-icon>
+        {{ showCreateForm() ? 'Cancel' : 'Add Zone' }}
+      </button>
+    }
+  </div>
+
+  @if (errorMessage(); as error) {
+    <p class="page-error" role="alert">{{ error }}</p>
+  }
+  @if (successMessage(); as msg) {
+    <p class="page-success" role="status">{{ msg }}</p>
+  }
+
+  <!-- Create form -->
+  @if (showCreateForm() && isAdmin()) {
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>New Delivery Zone</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="createForm" (ngSubmit)="onCreate()" class="zone-form">
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" placeholder="e.g. Tel Aviv" />
+            @if (createForm.get('city')?.hasError('required') && createForm.get('city')?.touched) {
+              <mat-error>City is required.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Delivery price (₪)</mat-label>
+            <input matInput type="number" formControlName="deliveryPrice" min="0" step="0.5" />
+            @if (createForm.get('deliveryPrice')?.hasError('min') && createForm.get('deliveryPrice')?.touched) {
+              <mat-error>Price must be ≥ 0.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Estimated time (min)</mat-label>
+            <input matInput type="number" formControlName="estimatedDeliveryMinutes" min="1" />
+            @if (createForm.get('estimatedDeliveryMinutes')?.hasError('min') && createForm.get('estimatedDeliveryMinutes')?.touched) {
+              <mat-error>Must be at least 1 minute.</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-flat-button type="submit" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                <mat-spinner diameter="18" />
+              } @else {
+                Create
+              }
+            </button>
+            <button mat-stroked-button type="button" (click)="toggleCreateForm()">Cancel</button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Edit form -->
+  @if (editingZone(); as zone) {
+    <mat-card class="form-card edit-card">
+      <mat-card-header>
+        <mat-card-title>Edit — {{ zone.city }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="editForm" (ngSubmit)="onSaveEdit()" class="zone-form">
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" />
+            @if (editForm.get('city')?.hasError('required') && editForm.get('city')?.touched) {
+              <mat-error>City is required.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Delivery price (₪)</mat-label>
+            <input matInput type="number" formControlName="deliveryPrice" min="0" step="0.5" />
+            @if (editForm.get('deliveryPrice')?.hasError('min') && editForm.get('deliveryPrice')?.touched) {
+              <mat-error>Price must be ≥ 0.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Estimated time (min)</mat-label>
+            <input matInput type="number" formControlName="estimatedDeliveryMinutes" min="1" />
+            @if (editForm.get('estimatedDeliveryMinutes')?.hasError('min') && editForm.get('estimatedDeliveryMinutes')?.touched) {
+              <mat-error>Must be at least 1 minute.</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-flat-button type="submit" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                <mat-spinner diameter="18" />
+              } @else {
+                Save
+              }
+            </button>
+            <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Table -->
+  @if (isLoading()) {
+    <div class="center-spinner">
+      <mat-spinner diameter="48" />
+    </div>
+  } @else if (zones().length === 0) {
+    <mat-card class="empty-card">
+      <mat-card-content class="empty-content">
+        <mat-icon class="empty-icon">location_off</mat-icon>
+        <p>No delivery zones configured yet.</p>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <mat-card class="table-card">
+      <table mat-table [dataSource]="zones()" class="zones-table">
+
+        <!-- City -->
+        <ng-container matColumnDef="city">
+          <th mat-header-cell *matHeaderCellDef>City</th>
+          <td mat-cell *matCellDef="let zone" class="city-cell">{{ zone.city }}</td>
+        </ng-container>
+
+        <!-- Delivery price -->
+        <ng-container matColumnDef="deliveryPrice">
+          <th mat-header-cell *matHeaderCellDef>Price</th>
+          <td mat-cell *matCellDef="let zone">₪{{ zone.deliveryPrice }}</td>
+        </ng-container>
+
+        <!-- ETA -->
+        <ng-container matColumnDef="eta">
+          <th mat-header-cell *matHeaderCellDef>ETA</th>
+          <td mat-cell *matCellDef="let zone">{{ zone.estimatedDeliveryMinutes }} min</td>
+        </ng-container>
+
+        <!-- Status -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let zone">
+            <mat-chip [class.chip-active]="zone.isActive" [class.chip-inactive]="!zone.isActive">
+              {{ zone.isActive ? 'Active' : 'Inactive' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Actions (admin only) -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let zone" class="actions-cell">
+            <button
+              mat-icon-button
+              (click)="startEdit(zone)"
+              matTooltip="Edit"
+              [disabled]="togglingId() === zone._id || deletingId() === zone._id"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+
+            <button
+              mat-icon-button
+              (click)="onToggleStatus(zone)"
+              [matTooltip]="zone.isActive ? 'Deactivate' : 'Activate'"
+              [disabled]="togglingId() === zone._id || deletingId() === zone._id"
+            >
+              @if (togglingId() === zone._id) {
+                <mat-spinner diameter="18" />
+              } @else {
+                <mat-icon>{{ zone.isActive ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+              }
+            </button>
+
+            <button
+              mat-icon-button
+              class="delete-btn"
+              (click)="onDelete(zone)"
+              matTooltip="Delete"
+              [disabled]="togglingId() === zone._id || deletingId() === zone._id"
+            >
+              @if (deletingId() === zone._id) {
+                <mat-spinner diameter="18" />
+              } @else {
+                <mat-icon>delete</mat-icon>
+              }
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns();" [class.editing-row]="editingZone()?._id === row._id"></tr>
+      </table>
+    </mat-card>
+  }
+</section>
