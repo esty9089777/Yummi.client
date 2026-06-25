@@ -1,0 +1,55 @@
+<section class="product-detail-page">
+  <a mat-button [routerLink]="backLink()" class="back-link">
+    <mat-icon>arrow_back</mat-icon> {{ backLabel() }}
+  </a>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (errorMessage(); as error) {
+    <div class="error-state">
+      <p class="error-message" role="alert">{{ error }}</p>
+      <a mat-stroked-button routerLink="/menu">Browse categories</a>
+    </div>
+  } @else if (product(); as item) {
+    <div class="detail-layout">
+      <div class="detail-image-wrap">
+        @if (item.image) {
+          <img [src]="item.image" [alt]="item.name" class="detail-image" />
+        } @else {
+          <div class="detail-image detail-image--placeholder">
+            <mat-icon>restaurant</mat-icon>
+          </div>
+        }
+      </div>
+
+      <div class="detail-info">
+        <div class="detail-header">
+          <h1>{{ item.name }}</h1>
+          @if (!item.isAvailable) {
+            <span class="badge-unavailable">Currently unavailable</span>
+          }
+        </div>
+
+        <p class="detail-price">{{ formatPrice(item.price) }}</p>
+
+        @if (item.description) {
+          <p class="detail-description">{{ item.description }}</p>
+        }
+
+        <mat-divider />
+
+        @if (item.allowedExtras.length > 0) {
+          <div class="extras-section">
+            <h3>Extras</h3>
+            <p class="extras-hint">
+              {{ item.freeExtrasCount > 0 ? item.freeExtrasCount + ' extra(s) included' : 'No free extras' }}
+              &mdash; {{ formatExtraPrice(item.pricePerExtra) }}
+            </p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>

@@ -1,13 +1,31 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
+import type { ApiResponse } from '../core/models/api-response.model';
+import { IProduct, IProductResponse, IProductsResponse } from '../core/models/product.model';
+
+export interface ProductListParams {
+  search?: string;
+  categoryId?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
-  constructor(private readonly api: ApiService) {}
+  private readonly api = inject(ApiService);
 
-  // TODO: implement getById(id)
-  // TODO: implement create(dto)  [ADMIN]
-  // TODO: implement update(id, dto)  [ADMIN]
-  // TODO: implement setAvailability(id, isAvailable)  [ADMIN, KITCHEN]
-  // TODO: implement delete(id)  [ADMIN]
+  async getAll(params?: ProductListParams): Promise<IProduct[]> {
+    const query = new URLSearchParams();
+    if (params?.search?.trim()) query.set('search', params.search.trim());
+    if (params?.categoryId) query.set('categoryId', params.categoryId);
+
+    const url = query.toString() ? `/products?${query.toString()}` : '/products';
+    const res = await this.api.http.get<ApiResponse<IProductsResponse>>(url);
+    const { products } = this.api.unwrap(res);
+    return products ?? [];
+  }
+
+  async getById(id: string): Promise<IProduct> {
+    const res = await this.api.http.get<ApiResponse<IProductResponse>>(`/products/${id}`);
+    const { product } = this.api.unwrap(res);
+    return product;
+  }
 }

@@ -60,6 +60,19 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'products',
+    redirectTo: 'menu',
+    pathMatch: 'full',
+  },
+  {
+    path: 'products/:id',
+    loadComponent: () =>
+      import('./features/products/product-detail.component').then(
+        (m) => m.ProductDetailComponent,
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: 'orders',
     loadComponent: () =>
       import('./features/orders/orders.component').then((m) => m.OrdersComponent),
@@ -69,7 +82,7 @@ export const routes: Routes = [
     path: 'kitchen',
     loadComponent: () =>
       import('./features/kitchen/kitchen.component').then((m) => m.KitchenComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard(UserRole.KITCHEN, UserRole.ADMIN)],
   },
   {
     path: 'delivery-zones',

@@ -1,0 +1,88 @@
+<section class="product-list-page">
+  <header class="page-header">
+    <a mat-button routerLink="/menu" class="back-link">
+      <mat-icon>arrow_back</mat-icon> All categories
+    </a>
+    @if (category(); as cat) {
+      <h1>{{ cat.name }}</h1>
+      @if (cat.description) {
+        <p class="category-description">{{ cat.description }}</p>
+      }
+    } @else if (isLoading()) {
+      <h1>Loading…</h1>
+    }
+  </header>
+
+  @if (category()) {
+    <div class="search-bar">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search in this category</mat-label>
+        <input
+          matInput
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="e.g. Margherita"
+        />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button aria-label="Clear" (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="error-state">
+      <p class="error-message" role="alert">{{ error }}</p>
+      <a mat-stroked-button routerLink="/menu">Back to categories</a>
+    </div>
+  } @else if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (products().length === 0) {
+    <div class="empty-state">
+      <p>
+        No products in {{ category()?.name ?? 'this category' }}@if (searchTerm()) {
+          &nbsp;matching "{{ searchTerm() }}"}.
+      </p>
+      @if (searchTerm()) {
+        <button mat-stroked-button (click)="clearSearch()">Clear search</button>
+      } @else {
+        <a mat-stroked-button routerLink="/menu">Choose another category</a>
+      }
+    </div>
+  } @else {
+    <div class="product-grid">
+      @for (product of products(); track product.id) {
+        <mat-card class="product-card">
+          @if (product.image) {
+            <img [src]="product.image" [alt]="product.name" class="product-image" />
+          } @else {
+            <div class="product-image product-image--placeholder">
+              <mat-icon>restaurant</mat-icon>
+            </div>
+          }
+          <mat-card-header>
+            <mat-card-title>{{ product.name }}</mat-card-title>
+            @if (product.description) {
+              <mat-card-subtitle class="product-description">{{ product.description }}</mat-card-subtitle>
+            }
+          </mat-card-header>
+          <mat-card-content>
+            <p class="product-price">{{ formatPrice(product.price) }}</p>
+            @if (!product.isAvailable) {
+              <span class="badge-unavailable">Unavailable</span>
+            }
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-flat-button color="primary" (click)="navigateToProduct(product.id)">
+              View details
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+</section>
