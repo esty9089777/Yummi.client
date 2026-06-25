@@ -46,9 +46,36 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
   },
   {
+    path: 'admin/ingredients',
+    loadComponent: () =>
+      import('./features/admin/ingredients/ingredient-management.component').then(
+        (m) => m.IngredientManagementComponent,
+      ),
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
+  },
+  {
+    path: 'categories/:id',
+    loadComponent: () =>
+      import('./features/products/product-list.component').then((m) => m.ProductListComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: 'menu',
     loadComponent: () =>
       import('./features/menu/menu.component').then((m) => m.MenuComponent),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'products',
+    redirectTo: 'menu',
+    pathMatch: 'full',
+  },
+  {
+    path: 'products/:id',
+    loadComponent: () =>
+      import('./features/products/product-detail.component').then(
+        (m) => m.ProductDetailComponent,
+      ),
     canActivate: [authGuard],
   },
   {
@@ -61,7 +88,7 @@ export const routes: Routes = [
     path: 'kitchen',
     loadComponent: () =>
       import('./features/kitchen/kitchen.component').then((m) => m.KitchenComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard(UserRole.KITCHEN, UserRole.ADMIN)],
   },
   {
     path: 'admin',

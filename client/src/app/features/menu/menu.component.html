@@ -2,7 +2,7 @@
   <header class="menu-header">
     <div>
       <h1>Menu</h1>
-      <p>Browse categories and discover what we offer.</p>
+      <p>Choose a category to browse products.</p>
     </div>
     <a mat-button routerLink="/">Back to Home</a>
   </header>
@@ -23,6 +23,10 @@
         <mat-card class="category-card">
           @if (category.image) {
             <img [src]="category.image" [alt]="category.name" class="category-image" />
+          } @else {
+            <div class="category-image category-image--placeholder">
+              <mat-icon>category</mat-icon>
+            </div>
           }
           <mat-card-header>
             <mat-card-title>{{ category.name }}</mat-card-title>
@@ -30,6 +34,11 @@
               <mat-card-subtitle>{{ category.description }}</mat-card-subtitle>
             }
           </mat-card-header>
+          <mat-card-actions>
+            <button mat-flat-button color="primary" (click)="navigateToCategory(category)">
+              View Products
+            </button>
+          </mat-card-actions>
         </mat-card>
       }
     </div>

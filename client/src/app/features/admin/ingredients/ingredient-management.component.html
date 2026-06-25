@@ -1,0 +1,135 @@
+<section class="ingredients-page">
+  <header class="ingredients-header">
+    <div>
+      <h1>Ingredient Management</h1>
+      <p>Create, update, and delete ingredients used in products.</p>
+    </div>
+    <a mat-button routerLink="/admin">Back to Admin</a>
+  </header>
+
+  @if (successMessage(); as message) {
+    <p class="success-message">{{ message }}</p>
+  }
+  @if (errorMessage(); as error) {
+    <p class="error-message" role="alert">{{ error }}</p>
+  }
+
+  <mat-card class="toolbar-card">
+    <mat-card-content>
+      <button mat-flat-button color="primary" type="button" (click)="toggleCreateForm()">
+        {{ showCreateForm() ? 'Cancel' : 'Add ingredient' }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  @if (showCreateForm()) {
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>New ingredient</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="createForm" (ngSubmit)="createIngredient()" class="ingredient-form">
+          <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Create ingredient
+            }
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (editingIngredient(); as selected) {
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Edit ingredient</mat-card-title>
+        <mat-card-subtitle>{{ selected.name }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="editForm" (ngSubmit)="saveEdit()" class="ingredient-form">
+          <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                Saving...
+              } @else {
+                Save changes
+              }
+            </button>
+            <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Ingredients</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (isLoading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="32" />
+        </div>
+      } @else if (ingredients().length === 0) {
+        <p>No ingredients found.</p>
+      } @else {
+        <table mat-table [dataSource]="ingredients()" class="ingredients-table">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let ingredient">{{ ingredient.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let ingredient">
+              <mat-chip-set>
+                <mat-chip
+                  [class.chip-available]="ingredient.status === IngredientStatus.AVAILABLE"
+                  [class.chip-unavailable]="ingredient.status === IngredientStatus.TEMPORARILY_UNAVAILABLE"
+                >
+                  {{ statusLabel(ingredient.status) }}
+                </mat-chip>
+              </mat-chip-set>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="usage">
+            <th mat-header-cell *matHeaderCellDef>Used in products</th>
+            <td mat-cell *matCellDef="let ingredient">{{ getUsage(ingredient) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let ingredient">
+              <button mat-stroked-button type="button" (click)="startEdit(ingredient)">Edit</button>
+              <button
+                mat-stroked-button
+                color="warn"
+                type="button"
+                (click)="deleteIngredient(ingredient)"
+              >
+                Delete
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

@@ -1,4 +1,163 @@
-<section class="kitchen-feature">
-  <h2>Kitchen</h2>
-  <p>Kitchen dashboard feature – to be implemented.</p>
+<section class="kitchen-page">
+  <header class="kitchen-header">
+    <div>
+      <h1>Kitchen Dashboard</h1>
+      <p>Manage ingredient stock and review incoming orders.</p>
+    </div>
+    <a mat-button routerLink="/">Back to Home</a>
+  </header>
+
+  @if (successMessage(); as message) {
+    <p class="success-message">{{ message }}</p>
+  }
+  @if (errorMessage(); as error) {
+    <p class="error-message" role="alert">{{ error }}</p>
+  }
+
+  <mat-tab-group>
+    <mat-tab label="Ingredients">
+      @if (isLoadingIngredients()) {
+        <div class="loading-state">
+          <mat-spinner diameter="32" />
+        </div>
+      } @else if (ingredients().length === 0) {
+        <p class="empty-state">No ingredients found.</p>
+      } @else {
+        <div class="ingredient-grid">
+          @for (ingredient of ingredients(); track ingredient.id) {
+            <mat-card class="ingredient-card">
+              <mat-card-header>
+                <mat-card-title>{{ ingredient.name }}</mat-card-title>
+                <mat-card-subtitle>
+                  <mat-chip-set>
+                    <mat-chip
+                      [class.chip-available]="ingredient.status === IngredientStatus.AVAILABLE"
+                      [class.chip-unavailable]="
+                        ingredient.status === IngredientStatus.TEMPORARILY_UNAVAILABLE
+                      "
+                    >
+                      {{ statusLabel(ingredient.status) }}
+                    </mat-chip>
+                  </mat-chip-set>
+                </mat-card-subtitle>
+              </mat-card-header>
+
+              <mat-card-content>
+                <p class="ingredient-hint">
+                  Base ingredients disable products when unavailable. Extras only disable themselves.
+                </p>
+              </mat-card-content>
+
+              <mat-card-actions>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="updatingIngredientId() === ingredient.id"
+                  (click)="toggleIngredientStatus(ingredient)"
+                >
+                  @if (updatingIngredientId() === ingredient.id) {
+                    Updating...
+                  } @else if (ingredient.status === IngredientStatus.AVAILABLE) {
+                    Mark unavailable
+                  } @else {
+                    Mark available
+                  }
+                </button>
+                <button
+                  mat-flat-button
+                  color="warn"
+                  type="button"
+                  [disabled]="reportingIngredientId() === ingredient.id"
+                  (click)="reportShortage(ingredient)"
+                >
+                  @if (reportingIngredientId() === ingredient.id) {
+                    Sending...
+                  } @else {
+                    Notify manager
+                  }
+                </button>
+              </mat-card-actions>
+            </mat-card>
+          }
+        </div>
+      }
+    </mat-tab>
+
+    <mat-tab label="Incoming orders">
+      @if (isLoadingOrders()) {
+        <div class="loading-state">
+          <mat-spinner diameter="32" />
+        </div>
+      } @else if (orders().length === 0) {
+        <p class="empty-state">No active kitchen orders.</p>
+      } @else {
+        <div class="orders-list">
+          @for (order of orders(); track order._id) {
+            <mat-card class="order-card">
+              <mat-card-header>
+                <mat-card-title>Order #{{ order._id.slice(-6) }}</mat-card-title>
+                <mat-card-subtitle>
+                  {{ order.status }} &middot; {{ order.items.length }} item(s) &middot; ₪{{
+                    order.total.toFixed(2)
+                  }}
+                </mat-card-subtitle>
+              </mat-card-header>
+
+              <mat-card-content>
+                @if (getOrderCheck(order._id); as check) {
+                  <div
+                    class="order-readiness"
+                    [class.order-readiness--ready]="check.canPrepareOrder"
+                    [class.order-readiness--blocked]="!check.canPrepareOrder"
+                  >
+                    @if (check.canPrepareOrder) {
+                      <mat-icon>check_circle</mat-icon>
+                      All ingredients are available.
+                    } @else {
+                      <mat-icon>warning</mat-icon>
+                      Missing ingredients detected.
+                    }
+                  </div>
+
+                  @for (item of check.items; track item.productId) {
+                    <div class="order-item-check">
+                      <strong>{{ item.quantity }}x {{ item.productName }}</strong>
+
+                      @if (item.missingBaseIngredients.length > 0) {
+                        <p class="missing-list">
+                          Missing base: {{ formatMissingNames(item.missingBaseIngredients) }}
+                        </p>
+                      }
+
+                      @if (item.missingSelectedExtras.length > 0) {
+                        <p class="missing-list missing-list--extra">
+                          Missing extras: {{ formatMissingNames(item.missingSelectedExtras) }}
+                        </p>
+                      }
+
+                      @if (item.canPrepare) {
+                        <p class="item-ready">Ready to prepare</p>
+                      }
+                    </div>
+
+                    @if (!$last) {
+                      <mat-divider />
+                    }
+                  }
+                }
+              </mat-card-content>
+
+              <mat-card-actions>
+                @if (order.status === OrderStatus.RECEIVED) {
+                  <button mat-flat-button color="primary" type="button" (click)="approveOrder(order)">
+                    Approve order
+                  </button>
+                }
+              </mat-card-actions>
+            </mat-card>
+          }
+        </div>
+      }
+    </mat-tab>
+  </mat-tab-group>
 </section>
