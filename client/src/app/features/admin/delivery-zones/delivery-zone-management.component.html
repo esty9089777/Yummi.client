@@ -1,0 +1,158 @@
+<section class="zones-page">
+  <header class="zones-header">
+    <div>
+      <h1>Delivery Zones</h1>
+      <p>Manage the cities available for delivery, pricing, and estimated times.</p>
+    </div>
+    <a mat-button routerLink="/admin">Back to Admin</a>
+  </header>
+
+  @if (successMessage(); as message) {
+    <p class="success-message">{{ message }}</p>
+  }
+  @if (errorMessage(); as error) {
+    <p class="error-message" role="alert">{{ error }}</p>
+  }
+
+  <mat-card class="toolbar-card">
+    <mat-card-content>
+      <button mat-flat-button color="primary" type="button" (click)="toggleCreateForm()">
+        {{ showCreateForm() ? 'Cancel' : 'Add delivery zone' }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  @if (showCreateForm()) {
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>New delivery zone</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="createForm" (ngSubmit)="createZone()" class="zone-form">
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" placeholder="e.g. Tel Aviv" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Delivery price (₪)</mat-label>
+            <input matInput type="number" min="0" formControlName="deliveryPrice" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Estimated time (minutes)</mat-label>
+            <input matInput type="number" min="1" formControlName="estimatedDeliveryMinutes" />
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Create zone
+            }
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (editingZone(); as selected) {
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Edit delivery zone</mat-card-title>
+        <mat-card-subtitle>{{ selected.city }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="editForm" (ngSubmit)="saveEdit()" class="zone-form">
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Delivery price (₪)</mat-label>
+            <input matInput type="number" min="0" formControlName="deliveryPrice" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Estimated time (minutes)</mat-label>
+            <input matInput type="number" min="1" formControlName="estimatedDeliveryMinutes" />
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                Saving...
+              } @else {
+                Save changes
+              }
+            </button>
+            <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Delivery zones</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (isLoading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="32" />
+        </div>
+      } @else if (zones().length === 0) {
+        <p class="empty-state">No delivery zones found. Add one to get started.</p>
+      } @else {
+        <table mat-table [dataSource]="zones()" class="zones-table">
+          <ng-container matColumnDef="city">
+            <th mat-header-cell *matHeaderCellDef>City</th>
+            <td mat-cell *matCellDef="let zone">{{ zone.city }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="deliveryPrice">
+            <th mat-header-cell *matHeaderCellDef>Price</th>
+            <td mat-cell *matCellDef="let zone">₪{{ zone.deliveryPrice }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="estimatedTime">
+            <th mat-header-cell *matHeaderCellDef>Est. Time</th>
+            <td mat-cell *matCellDef="let zone">{{ zone.estimatedDeliveryMinutes }} min</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let zone">
+              <span class="status-badge" [class.status-active]="zone.isActive" [class.status-inactive]="!zone.isActive">
+                {{ zone.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let zone" class="actions-cell">
+              <button mat-stroked-button type="button" (click)="startEdit(zone)">Edit</button>
+              <button
+                mat-stroked-button
+                type="button"
+                [color]="zone.isActive ? 'warn' : 'primary'"
+                (click)="toggleStatus(zone)"
+              >
+                {{ zone.isActive ? 'Deactivate' : 'Activate' }}
+              </button>
+              <button mat-stroked-button color="warn" type="button" (click)="deleteZone(zone)">
+                Delete
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

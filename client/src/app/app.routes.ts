@@ -46,18 +46,12 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
   },
   {
-    path: 'admin/ingredients',
+    path: 'admin/delivery-zones',
     loadComponent: () =>
-      import('./features/admin/ingredients/ingredient-management.component').then(
-        (m) => m.IngredientManagementComponent,
+      import('./features/admin/delivery-zones/delivery-zone-management.component').then(
+        (m) => m.DeliveryZoneManagementComponent,
       ),
     canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
-  },
-  {
-    path: 'categories/:id',
-    loadComponent: () =>
-      import('./features/products/product-list.component').then((m) => m.ProductListComponent),
-    canActivate: [authGuard],
   },
   {
     path: 'menu',
@@ -89,6 +83,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/kitchen/kitchen.component').then((m) => m.KitchenComponent),
     canActivate: [authGuard, roleGuard(UserRole.KITCHEN, UserRole.ADMIN)],
+  },
+  {
+    path: 'delivery-zones',
+    loadComponent: () =>
+      import('./features/delivery-zones/delivery-zones.component').then(
+        (m) => m.DeliveryZonesComponent,
+      ),
+    canActivate: [authGuard],
   },
   {
     path: 'admin',
