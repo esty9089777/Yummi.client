@@ -162,7 +162,7 @@
               mat-icon-button
               (click)="startEdit(zone)"
               matTooltip="Edit"
-              [disabled]="togglingId() === zone._id || deletingId() === zone._id"
+              [disabled]="togglingId() === zone.id || deletingId() === zone.id"
             >
               <mat-icon>edit</mat-icon>
             </button>
@@ -171,9 +171,9 @@
               mat-icon-button
               (click)="onToggleStatus(zone)"
               [matTooltip]="zone.isActive ? 'Deactivate' : 'Activate'"
-              [disabled]="togglingId() === zone._id || deletingId() === zone._id"
+              [disabled]="togglingId() === zone.id || deletingId() === zone.id"
             >
-              @if (togglingId() === zone._id) {
+              @if (togglingId() === zone.id) {
                 <mat-spinner diameter="18" />
               } @else {
                 <mat-icon>{{ zone.isActive ? 'toggle_on' : 'toggle_off' }}</mat-icon>
@@ -185,9 +185,9 @@
               class="delete-btn"
               (click)="onDelete(zone)"
               matTooltip="Delete"
-              [disabled]="togglingId() === zone._id || deletingId() === zone._id"
+              [disabled]="togglingId() === zone.id || deletingId() === zone.id"
             >
-              @if (deletingId() === zone._id) {
+              @if (deletingId() === zone.id) {
                 <mat-spinner diameter="18" />
               } @else {
                 <mat-icon>delete</mat-icon>
@@ -197,7 +197,7 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns();" [class.editing-row]="editingZone()?._id === row._id"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns();" [class.editing-row]="editingZone()?.id === row.id"></tr>
       </table>
     </mat-card>
   }

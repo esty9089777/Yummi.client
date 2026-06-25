@@ -1,0 +1,227 @@
+<section class="bh-page">
+  <header class="bh-header">
+    <div>
+      <h1>Business Hours</h1>
+      <p>Configure when the restaurant is open for orders.</p>
+    </div>
+    <a mat-button routerLink="/admin">Back to Admin</a>
+  </header>
+
+  @if (successMessage(); as message) {
+    <p class="success-message">{{ message }}</p>
+  }
+  @if (errorMessage(); as error) {
+    <p class="error-message" role="alert">{{ error }}</p>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else {
+
+    <!-- Current Status Banner -->
+    @if (openStatus(); as status) {
+      <div class="status-banner" [class.status-open]="status.isOpen" [class.status-closed]="!status.isOpen">
+        <mat-icon>{{ status.isOpen ? 'store' : 'store_mall_directory' }}</mat-icon>
+        <div class="status-text">
+          <strong>{{ status.isOpen ? 'Open Now' : 'Closed Now' }}</strong>
+          <span>{{ status.reason }}</span>
+          <span class="status-time">Current server time: {{ status.currentTime }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- Weekly Schedule -->
+    <mat-card class="schedule-card">
+      <mat-card-header>
+        <mat-card-title>Weekly Schedule</mat-card-title>
+        <mat-card-subtitle>Set default open and close times for each day of the week.</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th class="col-day">Day</th>
+              <th class="col-closed">Closed</th>
+              <th class="col-time">Opens</th>
+              <th class="col-time">Closes</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (day of weeklySchedule(); track day.dayOfWeek) {
+              <tr [class.row-closed]="day.isClosed">
+                <td class="col-day">{{ DAY_NAMES[day.dayOfWeek] }}</td>
+                <td class="col-closed">
+                  <mat-checkbox
+                    [checked]="day.isClosed"
+                    (change)="updateDay($index, 'isClosed', $event.checked)"
+                    color="warn"
+                  />
+                </td>
+                <td class="col-time">
+                  @if (!day.isClosed) {
+                    <input
+                      class="time-input"
+                      type="time"
+                      [value]="day.openTime"
+                      (change)="updateDay($index, 'openTime', $any($event.target).value)"
+                    />
+                  } @else {
+                    <span class="na-label">—</span>
+                  }
+                </td>
+                <td class="col-time">
+                  @if (!day.isClosed) {
+                    <input
+                      class="time-input"
+                      type="time"
+                      [value]="day.closeTime"
+                      (change)="updateDay($index, 'closeTime', $any($event.target).value)"
+                    />
+                  } @else {
+                    <span class="na-label">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </mat-card-content>
+      <mat-card-actions>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="saveSchedule()"
+          [disabled]="isSubmittingSchedule()"
+        >
+          @if (isSubmittingSchedule()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            Save schedule
+          }
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Special Days -->
+    <mat-card class="special-days-card">
+      <mat-card-header>
+        <mat-card-title>Special Days</mat-card-title>
+        <mat-card-subtitle>Override the weekly schedule for holidays, events, or closures.</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+
+        <!-- Add special day form -->
+        <form [formGroup]="specialDayForm" (ngSubmit)="addSpecialDay()" class="special-day-form">
+          <h3 class="form-heading">Add / update special day</h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="field-date">
+              <mat-label>Start date</mat-label>
+              <input matInput type="date" formControlName="date" />
+              @if (specialDayForm.get('date')?.invalid && specialDayForm.get('date')?.touched) {
+                <mat-error>Start date is required.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="field-date">
+              <mat-label>End date (optional)</mat-label>
+              <input matInput type="date" formControlName="endDate" />
+              <mat-hint>Leave blank for a single day.</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="field-label">
+            <mat-label>Label</mat-label>
+            <input matInput formControlName="label" placeholder="e.g. Passover, Staff event…" />
+            @if (specialDayForm.get('label')?.invalid && specialDayForm.get('label')?.touched) {
+              <mat-error>Label must be at least 2 characters.</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="closed-toggle">
+            <mat-checkbox formControlName="isClosed" color="warn">
+              Closed all day
+            </mat-checkbox>
+          </div>
+
+          @if (specialDayIsOpen()) {
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="field-time">
+                <mat-label>Open time</mat-label>
+                <input matInput type="time" formControlName="openTime" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="field-time">
+                <mat-label>Close time</mat-label>
+                <input matInput type="time" formControlName="closeTime" />
+              </mat-form-field>
+            </div>
+          }
+
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            [disabled]="isSubmittingSpecialDay()"
+          >
+            @if (isSubmittingSpecialDay()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Save special day
+            }
+          </button>
+        </form>
+
+        <!-- Existing special days table -->
+        @if (specialDays().length > 0) {
+          <table mat-table [dataSource]="specialDays()" class="special-days-table">
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Date(s)</th>
+              <td mat-cell *matCellDef="let day">{{ formatDateRange(day) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="label">
+              <th mat-header-cell *matHeaderCellDef>Label</th>
+              <td mat-cell *matCellDef="let day">{{ day.label }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="hours">
+              <th mat-header-cell *matHeaderCellDef>Hours</th>
+              <td mat-cell *matCellDef="let day">
+                <span
+                  class="hours-badge"
+                  [class.hours-closed]="day.isClosed"
+                  [class.hours-open]="!day.isClosed"
+                >
+                  {{ formatHours(day) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let day">
+                <button
+                  mat-stroked-button
+                  color="warn"
+                  type="button"
+                  (click)="removeSpecialDay(day.date, day.label)"
+                >
+                  Remove
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="specialDayDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: specialDayDisplayedColumns"></tr>
+          </table>
+        } @else {
+          <p class="empty-state">No special days configured.</p>
+        }
+      </mat-card-content>
+    </mat-card>
+
+  }
+</section>
