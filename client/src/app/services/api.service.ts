@@ -8,6 +8,7 @@ import type { ApiResponse } from '../core/models/api-response.model';
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   readonly http: AxiosInstance;
+  private unauthorizedHandler: (() => void) | undefined;
 
   constructor() {
     this.http = axios.create({
@@ -23,10 +24,16 @@ export class ApiService {
       (error) => {
         if (error.response?.status === 401) {
           removeBrowserStorageItem(TOKEN_KEY);
+          this.unauthorizedHandler?.();
         }
         return Promise.reject(error);
       },
     );
+  }
+
+  /** Called by AuthService so a 401 also clears in-memory session state. */
+  registerUnauthorizedHandler(handler: () => void): void {
+    this.unauthorizedHandler = handler;
   }
 
   /** Unwraps the Axios envelope and returns the `data` field of the API response body. */

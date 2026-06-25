@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { roleGuard } from './core/guards/role.guard';
+import { UserRole } from './core/models/enums';
 
 export const routes: Routes = [
   {
@@ -20,6 +22,28 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/register/register.component').then((m) => m.RegisterComponent),
     canActivate: [guestGuard],
+  },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'admin/employees',
+    loadComponent: () =>
+      import('./features/profile/employees/employee-management.component').then(
+        (m) => m.EmployeeManagementComponent,
+      ),
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
+  },
+  {
+    path: 'admin/categories',
+    loadComponent: () =>
+      import('./features/admin/categories/category-management.component').then(
+        (m) => m.CategoryManagementComponent,
+      ),
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
   },
   {
     path: 'menu',
@@ -43,7 +67,7 @@ export const routes: Routes = [
     path: 'admin',
     loadComponent: () =>
       import('./features/admin/admin.component').then((m) => m.AdminComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
   },
   {
     path: '**',

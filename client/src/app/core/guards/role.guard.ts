@@ -10,9 +10,11 @@ import { AuthService } from '../../services/auth.service';
  *   canActivate: [roleGuard(UserRole.ADMIN, UserRole.KITCHEN)]
  */
 export function roleGuard(...allowedRoles: UserRole[]): CanActivateFn {
-  return () => {
+  return async () => {
     const auth = inject(AuthService);
     const router = inject(Router);
+
+    await auth.ensureSessionInitialized();
 
     const role = auth.activeRole();
     if (role && allowedRoles.includes(role)) {

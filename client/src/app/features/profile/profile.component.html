@@ -1,0 +1,131 @@
+<section class="profile-page">
+  <header class="profile-header">
+    <div>
+      <h1>My Profile</h1>
+      @if (user(); as currentUser) {
+        <p>{{ currentUser.email }}</p>
+      }
+    </div>
+    <a mat-button routerLink="/">Back to Home</a>
+  </header>
+
+  <div class="profile-grid">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Personal details</mat-card-title>
+        <mat-card-subtitle>Update your name, phone, and default address</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        @if (profileMessage(); as message) {
+          <p class="success-message">{{ message }}</p>
+        }
+        @if (profileError(); as error) {
+          <p class="error-message" role="alert">{{ error }}</p>
+        }
+
+        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
+          <mat-form-field appearance="outline">
+            <mat-label>Full name</mat-label>
+            <input matInput formControlName="fullName" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Phone</mat-label>
+            <input matInput formControlName="phone" />
+          </mat-form-field>
+
+          <mat-checkbox
+            [checked]="includeAddress()"
+            (change)="toggleAddress($event.checked)"
+          >
+            Save a default delivery address
+          </mat-checkbox>
+
+          @if (includeAddress()) {
+            <div class="address-fields">
+              <mat-form-field appearance="outline">
+                <mat-label>City</mat-label>
+                <input matInput formControlName="city" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Street</mat-label>
+                <input matInput formControlName="street" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>House number</mat-label>
+                <input matInput formControlName="houseNumber" />
+              </mat-form-field>
+            </div>
+          }
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="isSavingProfile()">
+            @if (isSavingProfile()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Save profile
+            }
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    @if (availableRoles().length > 1) {
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Active role</mat-card-title>
+          <mat-card-subtitle>
+            Current session role: <strong>{{ activeRole() }}</strong>
+          </mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          @if (roleError(); as error) {
+            <p class="error-message" role="alert">{{ error }}</p>
+          }
+
+          <div class="role-switch">
+            <mat-form-field appearance="outline">
+              <mat-label>Switch role</mat-label>
+              <mat-select
+                [value]="selectedRole()"
+                (selectionChange)="selectedRole.set($event.value)"
+              >
+                @for (role of availableRoles(); track role) {
+                  <mat-option [value]="role">{{ role }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="switchRole()"
+              [disabled]="isSwitchingRole() || selectedRole() === activeRole()"
+            >
+              @if (isSwitchingRole()) {
+                Switching...
+              } @else {
+                Apply role
+              }
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    @if (canManageEmployees()) {
+      <mat-card class="admin-card">
+        <mat-card-header>
+          <mat-card-title>Employee management</mat-card-title>
+          <mat-card-subtitle>Admin tools for managing staff accounts</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-actions>
+          <a mat-flat-button color="primary" routerLink="/admin/employees">
+            Manage employees
+          </a>
+        </mat-card-actions>
+      </mat-card>
+    }
+  </div>
+</section>
