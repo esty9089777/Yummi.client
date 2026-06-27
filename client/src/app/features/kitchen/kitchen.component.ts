@@ -1,4 +1,5 @@
 import {
+  OnDestroy,
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
@@ -13,12 +14,14 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { IngredientService } from '../../services/ingredient.service';
 import {
   IOrderIngredientCheck,
   OrderService,
 } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
+import { SocketService, SocketEvents } from '../../core/services/socket.service';
 import { IIngredient } from '../../core/models/ingredient.model';
 import { IOrder } from '../../core/models/order.model';
 import { IngredientStatus, OrderStatus } from '../../core/models/enums';
@@ -36,15 +39,18 @@ import { getApiErrorMessage } from '../../core/utils/api-error.util';
     MatIconModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    MatSnackBarModule,
   ],
   templateUrl: './kitchen.component.html',
   styleUrl: './kitchen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class KitchenComponent {
+export class KitchenComponent implements OnDestroy {
   private readonly ingredientService = inject(IngredientService);
   private readonly orderService = inject(OrderService);
   private readonly auth = inject(AuthService);
+  private readonly socketService = inject(SocketService);
+  private readonly snackBar = inject(MatSnackBar);
 
   readonly IngredientStatus = IngredientStatus;
   readonly OrderStatus = OrderStatus;
@@ -61,8 +67,15 @@ export class KitchenComponent {
 
   constructor() {
     afterNextRender(() => {
-      void this.loadAll();
+      void this.loadAll().then(() => this._registerSocketListeners());
     });
+  }
+
+  ngOnDestroy(): void {
+    this.socketService.off(SocketEvents.ORDER_CREATED);
+    this.socketService.off(SocketEvents.ORDER_CANCELLED);
+    this.socketService.off(SocketEvents.INGREDIENT_AVAILABILITY_CHANGED);
+    this.socketService.off(SocketEvents.KITCHEN_ISSUE_REPORTED);
   }
 
   async loadAll(): Promise<void> {
@@ -179,5 +192,67 @@ export class KitchenComponent {
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Failed to approve order.'));
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  private _registerSocketListeners(): void {
+    // A new order was placed — add it to the queue and fetch its ingredient check.
+    this.socketService.on<IOrder>(SocketEvents.ORDER_CREATED, async (newOrder) => {
+      const alreadyInList = this.orders().some((o) => o._id === newOrder._id);
+      if (!alreadyInList) {
+        this.orders.update((list) => [...list, newOrder]);
+        try {
+          const check = await this.orderService.checkOrderIngredients(newOrder._id);
+          this.orderChecks.update((checks) => ({ ...checks, [newOrder._id]: check }));
+        } catch {
+          // Non-critical: the check will be missing but the order is still shown.
+        }
+      }
+
+      this.snackBar.open(
+        `New order #${newOrder._id.slice(-6).toUpperCase()} received!`,
+        'Dismiss',
+        { duration: 6000, panelClass: 'snack-info', horizontalPosition: 'end', verticalPosition: 'top' },
+      );
+    });
+
+    // Customer cancelled their order — remove it from the kitchen queue.
+    this.socketService.on<IOrder>(SocketEvents.ORDER_CANCELLED, (cancelledOrder) => {
+      this.orders.update((list) => list.filter((o) => o._id !== cancelledOrder._id));
+      this.orderChecks.update((checks) => {
+        const next = { ...checks };
+        delete next[cancelledOrder._id];
+        return next;
+      });
+
+      this.snackBar.open(
+        `Order #${cancelledOrder._id.slice(-6).toUpperCase()} was cancelled by the customer.`,
+        'Dismiss',
+        { duration: 5000, panelClass: 'snack-warn', horizontalPosition: 'end', verticalPosition: 'top' },
+      );
+    });
+
+    // An ingredient availability changed — reload the ingredients and order checks.
+    this.socketService.on<{ ingredientId: string; status: string }>(
+      SocketEvents.INGREDIENT_AVAILABILITY_CHANGED,
+      () => {
+        void this.loadAll().catch(() => undefined);
+      },
+    );
+
+    // Kitchen issue reported (admin notification).
+    this.socketService.on<{ ingredientId: string; message: string; reportedBy: string }>(
+      SocketEvents.KITCHEN_ISSUE_REPORTED,
+      (payload) => {
+        this.snackBar.open(
+          `Kitchen issue reported: ${payload.message ?? 'Ingredient shortage alert'}`,
+          'Dismiss',
+          { duration: 8000, panelClass: 'snack-warn', horizontalPosition: 'end', verticalPosition: 'top' },
+        );
+      },
+    );
   }
 }

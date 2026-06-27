@@ -7,7 +7,6 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { AuthService } from '../../../services/auth.service';
 import { NotificationService } from '../../../services/notification.service';
 import { CartService } from '../../../services/cart.service';
-import { SocketService } from '../../../core/services/socket.service';
 import { UserRole } from '../../../core/models/enums';
 
 @Component({
@@ -29,7 +28,6 @@ export class NavComponent {
   private readonly auth = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
   private readonly cartService = inject(CartService);
-  private readonly socketService = inject(SocketService);
   private readonly router = inject(Router);
 
   readonly isLoggedIn = this.auth.isLoggedIn;
@@ -49,6 +47,13 @@ export class NavComponent {
         this.cartService.reset();
       }
     });
+
+    // Load notifications once a session is established (any role).
+    effect(() => {
+      if (this.isLoggedIn()) {
+        void this.notificationService.load().catch(() => undefined);
+      }
+    });
   }
 
   isRole(...roles: UserRole[]): boolean {
@@ -57,9 +62,8 @@ export class NavComponent {
   }
 
   logout(): void {
-    this.socketService.disconnect();
     this.cartService.reset();
-    this.auth.logout();
+    this.auth.logout(); // also disconnects socket
     void this.router.navigate(['/login']);
   }
 }
