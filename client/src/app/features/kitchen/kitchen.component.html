@@ -2,19 +2,171 @@
   <header class="kitchen-header">
     <div>
       <h1>Kitchen Dashboard</h1>
-      <p>Manage ingredient stock and review incoming orders.</p>
+      <p>Manage ingredient stock and advance orders through the kitchen pipeline.</p>
     </div>
     <a mat-button routerLink="/">Back to Home</a>
   </header>
 
   @if (successMessage(); as message) {
-    <p class="success-message">{{ message }}</p>
+    <p class="success-message" role="status">{{ message }}</p>
   }
   @if (errorMessage(); as error) {
     <p class="error-message" role="alert">{{ error }}</p>
   }
 
   <mat-tab-group>
+
+    <!-- ───────────────── ORDERS TAB ───────────────── -->
+    <mat-tab label="Orders">
+      @if (isLoadingOrders()) {
+        <div class="loading-state">
+          <mat-spinner diameter="32" />
+        </div>
+      } @else if (orders().length === 0) {
+        <div class="empty-state">
+          <mat-icon>check_circle_outline</mat-icon>
+          <p>No active orders. Kitchen is clear!</p>
+        </div>
+      } @else {
+        <!-- Status pipeline summary -->
+        <div class="pipeline-summary">
+          @for (stage of pipelineStages; track stage.status) {
+            <div class="pipeline-stage" [class]="'pipeline-stage--' + stage.css">
+              <span class="pipeline-count">{{ countByStatus(stage.status) }}</span>
+              <mat-icon>{{ stage.icon }}</mat-icon>
+              <span class="pipeline-label">{{ stage.label }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="orders-list">
+          @for (order of orders(); track order._id) {
+            <mat-card class="order-card" [class]="'order-card--' + statusCss(order.status)">
+
+              <mat-card-header>
+                <div class="order-header-content">
+                  <div class="order-title-row">
+                    <mat-card-title>
+                      Order #{{ order._id.slice(-6).toUpperCase() }}
+                    </mat-card-title>
+                    <span class="status-chip" [class]="'status-chip--' + statusCss(order.status)">
+                      <mat-icon class="status-icon">{{ statusIcon(order.status) }}</mat-icon>
+                      {{ statusLabel(order.status) }}
+                    </span>
+                  </div>
+                  <mat-card-subtitle>
+                    {{ order.orderType }} &middot; {{ order.items.length }} item(s) &middot; ₪{{ order.total.toFixed(2) }}
+                  </mat-card-subtitle>
+                </div>
+              </mat-card-header>
+
+              <!-- Status stepper -->
+              <div class="status-stepper">
+                @for (step of orderSteps; track step.status) {
+                  <div
+                    class="step"
+                    [class.step--done]="isStepDone(order.status, step.status)"
+                    [class.step--active]="order.status === step.status"
+                  >
+                    <div class="step-dot">
+                      <mat-icon>{{ isStepDone(order.status, step.status) ? 'check' : step.icon }}</mat-icon>
+                    </div>
+                    <span class="step-label">{{ step.label }}</span>
+                  </div>
+                  @if (!$last) {
+                    <div
+                      class="step-line"
+                      [class.step-line--done]="isStepDone(order.status, step.status)"
+                    ></div>
+                  }
+                }
+              </div>
+
+              <mat-card-content>
+                <!-- Items list -->
+                <ul class="order-items-list">
+                  @for (item of order.items; track item.productId) {
+                    <li>
+                      <span class="item-qty">{{ item.quantity }}×</span>
+                      <span class="item-name">{{ item.name }}</span>
+                      @if (item.selectedExtras.length > 0) {
+                        <span class="item-extras">
+                          + {{ item.selectedExtras.length }} extra{{ item.selectedExtras.length > 1 ? 's' : '' }}
+                        </span>
+                      }
+                    </li>
+                  }
+                </ul>
+
+                @if (order.orderType === 'DELIVERY' && order.deliveryAddress) {
+                  <p class="order-delivery-info">
+                    <mat-icon>delivery_dining</mat-icon>
+                    {{ order.deliveryAddress }}, {{ order.deliveryCity }}
+                  </p>
+                }
+
+                <!-- Ingredient readiness check -->
+                @if (getOrderCheck(order._id); as check) {
+                  <div
+                    class="order-readiness"
+                    [class.order-readiness--ready]="check.canPrepareOrder"
+                    [class.order-readiness--blocked]="!check.canPrepareOrder"
+                  >
+                    <mat-icon>{{ check.canPrepareOrder ? 'check_circle' : 'warning' }}</mat-icon>
+                    @if (check.canPrepareOrder) {
+                      All ingredients available
+                    } @else {
+                      Missing ingredients — check before advancing
+                    }
+                  </div>
+
+                  @for (item of check.items; track item.productId) {
+                    @if (!item.canPrepare) {
+                      <div class="order-item-check">
+                        <strong>{{ item.quantity }}× {{ item.productName }}</strong>
+                        @if (item.missingBaseIngredients.length > 0) {
+                          <p class="missing-list">
+                            Missing base: {{ formatMissingNames(item.missingBaseIngredients) }}
+                          </p>
+                        }
+                        @if (item.missingSelectedExtras.length > 0) {
+                          <p class="missing-list missing-list--extra">
+                            Missing extras: {{ formatMissingNames(item.missingSelectedExtras) }}
+                          </p>
+                        }
+                      </div>
+                    }
+                  }
+                }
+              </mat-card-content>
+
+              <mat-card-actions>
+                @if (nextStatus(order); as next) {
+                  <button
+                    mat-flat-button
+                    [class]="'action-btn action-btn--' + statusCss(next)"
+                    type="button"
+                    [disabled]="updatingOrderId() === order._id"
+                    (click)="advanceStatus(order)"
+                  >
+                    @if (updatingOrderId() === order._id) {
+                      <mat-spinner diameter="18" />
+                      Updating...
+                    } @else {
+                      <mat-icon>{{ statusIcon(next) }}</mat-icon>
+                      {{ actionLabel(order) }}
+                    }
+                  </button>
+                }
+              </mat-card-actions>
+
+            </mat-card>
+          }
+        </div>
+      }
+    </mat-tab>
+
+    <!-- ───────────────── INGREDIENTS TAB ───────────────── -->
     <mat-tab label="Ingredients">
       @if (isLoadingIngredients()) {
         <div class="loading-state">
@@ -32,9 +184,7 @@
                   <mat-chip-set>
                     <mat-chip
                       [class.chip-available]="ingredient.status === IngredientStatus.AVAILABLE"
-                      [class.chip-unavailable]="
-                        ingredient.status === IngredientStatus.TEMPORARILY_UNAVAILABLE
-                      "
+                      [class.chip-unavailable]="ingredient.status === IngredientStatus.TEMPORARILY_UNAVAILABLE"
                     >
                       {{ statusLabel(ingredient.status) }}
                     </mat-chip>
@@ -83,81 +233,5 @@
       }
     </mat-tab>
 
-    <mat-tab label="Incoming orders">
-      @if (isLoadingOrders()) {
-        <div class="loading-state">
-          <mat-spinner diameter="32" />
-        </div>
-      } @else if (orders().length === 0) {
-        <p class="empty-state">No active kitchen orders.</p>
-      } @else {
-        <div class="orders-list">
-          @for (order of orders(); track order._id) {
-            <mat-card class="order-card">
-              <mat-card-header>
-                <mat-card-title>Order #{{ order._id.slice(-6) }}</mat-card-title>
-                <mat-card-subtitle>
-                  {{ order.status }} &middot; {{ order.items.length }} item(s) &middot; ₪{{
-                    order.total.toFixed(2)
-                  }}
-                </mat-card-subtitle>
-              </mat-card-header>
-
-              <mat-card-content>
-                @if (getOrderCheck(order._id); as check) {
-                  <div
-                    class="order-readiness"
-                    [class.order-readiness--ready]="check.canPrepareOrder"
-                    [class.order-readiness--blocked]="!check.canPrepareOrder"
-                  >
-                    @if (check.canPrepareOrder) {
-                      <mat-icon>check_circle</mat-icon>
-                      All ingredients are available.
-                    } @else {
-                      <mat-icon>warning</mat-icon>
-                      Missing ingredients detected.
-                    }
-                  </div>
-
-                  @for (item of check.items; track item.productId) {
-                    <div class="order-item-check">
-                      <strong>{{ item.quantity }}x {{ item.productName }}</strong>
-
-                      @if (item.missingBaseIngredients.length > 0) {
-                        <p class="missing-list">
-                          Missing base: {{ formatMissingNames(item.missingBaseIngredients) }}
-                        </p>
-                      }
-
-                      @if (item.missingSelectedExtras.length > 0) {
-                        <p class="missing-list missing-list--extra">
-                          Missing extras: {{ formatMissingNames(item.missingSelectedExtras) }}
-                        </p>
-                      }
-
-                      @if (item.canPrepare) {
-                        <p class="item-ready">Ready to prepare</p>
-                      }
-                    </div>
-
-                    @if (!$last) {
-                      <mat-divider />
-                    }
-                  }
-                }
-              </mat-card-content>
-
-              <mat-card-actions>
-                @if (order.status === OrderStatus.RECEIVED) {
-                  <button mat-flat-button color="primary" type="button" (click)="approveOrder(order)">
-                    Approve order
-                  </button>
-                }
-              </mat-card-actions>
-            </mat-card>
-          }
-        </div>
-      }
-    </mat-tab>
   </mat-tab-group>
 </section>

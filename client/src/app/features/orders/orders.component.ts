@@ -67,6 +67,22 @@ export class OrdersComponent implements OnInit, OnDestroy {
   readonly OrderStatus = OrderStatus;
   readonly OrderType = OrderType;
 
+  readonly orderSteps = [
+    { status: OrderStatus.RECEIVED, label: 'Received', icon: 'inbox' },
+    { status: OrderStatus.APPROVED, label: 'Approved', icon: 'thumb_up' },
+    { status: OrderStatus.IN_PREPARATION, label: 'Preparing', icon: 'soup_kitchen' },
+    { status: OrderStatus.READY, label: 'Ready', icon: 'check_circle' },
+    { status: OrderStatus.COMPLETED, label: 'Completed', icon: 'done_all' },
+  ] as const;
+
+  private readonly STATUS_ORDER = [
+    OrderStatus.RECEIVED,
+    OrderStatus.APPROVED,
+    OrderStatus.IN_PREPARATION,
+    OrderStatus.READY,
+    OrderStatus.COMPLETED,
+  ];
+
   readonly orders = signal<IOrder[]>([]);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
@@ -124,6 +140,25 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   statusClass(status: OrderStatus): string {
     return `status-${status.toLowerCase()}`;
+  }
+
+  statusLabel(status: OrderStatus): string {
+    const labels: Record<OrderStatus, string> = {
+      [OrderStatus.RECEIVED]: 'Received',
+      [OrderStatus.APPROVED]: 'Approved',
+      [OrderStatus.IN_PREPARATION]: 'In Preparation',
+      [OrderStatus.READY]: 'Ready',
+      [OrderStatus.COMPLETED]: 'Completed',
+      [OrderStatus.CANCELLED]: 'Cancelled',
+    };
+    return labels[status] ?? status;
+  }
+
+  isStepDone(currentStatus: OrderStatus, stepStatus: OrderStatus): boolean {
+    if (currentStatus === OrderStatus.CANCELLED) return false;
+    const currentIdx = this.STATUS_ORDER.indexOf(currentStatus);
+    const stepIdx = this.STATUS_ORDER.indexOf(stepStatus);
+    return stepIdx < currentIdx;
   }
 
   formatPrice(price: number): string {

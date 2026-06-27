@@ -27,6 +27,21 @@ import { IOrder } from '../../core/models/order.model';
 import { IngredientStatus, OrderStatus } from '../../core/models/enums';
 import { getApiErrorMessage } from '../../core/utils/api-error.util';
 
+/** Allowed forward transition for each status the kitchen can act on. */
+const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
+  [OrderStatus.RECEIVED]: OrderStatus.APPROVED,
+  [OrderStatus.APPROVED]: OrderStatus.IN_PREPARATION,
+  [OrderStatus.IN_PREPARATION]: OrderStatus.READY,
+  [OrderStatus.READY]: OrderStatus.COMPLETED,
+};
+
+const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
+  [OrderStatus.RECEIVED]: 'Approve',
+  [OrderStatus.APPROVED]: 'Start Preparing',
+  [OrderStatus.IN_PREPARATION]: 'Mark Ready',
+  [OrderStatus.READY]: 'Mark Completed',
+};
+
 @Component({
   selector: 'app-kitchen',
   standalone: true,
@@ -64,6 +79,7 @@ export class KitchenComponent implements OnDestroy {
   readonly successMessage = signal<string | null>(null);
   readonly updatingIngredientId = signal<string | null>(null);
   readonly reportingIngredientId = signal<string | null>(null);
+  readonly updatingOrderId = signal<string | null>(null);
 
   constructor() {
     afterNextRender(() => {
@@ -118,6 +134,66 @@ export class KitchenComponent implements OnDestroy {
     }
   }
 
+  /** Pipeline summary stages shown above the order list. */
+  readonly pipelineStages = [
+    { status: OrderStatus.RECEIVED, label: 'Received', icon: 'inbox', css: 'received' },
+    { status: OrderStatus.APPROVED, label: 'Approved', icon: 'thumb_up', css: 'approved' },
+    { status: OrderStatus.IN_PREPARATION, label: 'Preparing', icon: 'soup_kitchen', css: 'preparing' },
+    { status: OrderStatus.READY, label: 'Ready', icon: 'check_circle', css: 'ready' },
+  ] as const;
+
+  /** Steps shown inside each order card's stepper. */
+  readonly orderSteps = [
+    { status: OrderStatus.RECEIVED, label: 'Received', icon: 'inbox' },
+    { status: OrderStatus.APPROVED, label: 'Approved', icon: 'thumb_up' },
+    { status: OrderStatus.IN_PREPARATION, label: 'Preparing', icon: 'soup_kitchen' },
+    { status: OrderStatus.READY, label: 'Ready', icon: 'check_circle' },
+    { status: OrderStatus.COMPLETED, label: 'Completed', icon: 'done_all' },
+  ] as const;
+
+  private readonly STATUS_ORDER = [
+    OrderStatus.RECEIVED,
+    OrderStatus.APPROVED,
+    OrderStatus.IN_PREPARATION,
+    OrderStatus.READY,
+    OrderStatus.COMPLETED,
+  ];
+
+  countByStatus(status: OrderStatus): number {
+    return this.orders().filter((o) => o.status === status).length;
+  }
+
+  statusCss(status: OrderStatus): string {
+    const map: Partial<Record<OrderStatus, string>> = {
+      [OrderStatus.RECEIVED]: 'received',
+      [OrderStatus.APPROVED]: 'approved',
+      [OrderStatus.IN_PREPARATION]: 'preparing',
+      [OrderStatus.READY]: 'ready',
+      [OrderStatus.COMPLETED]: 'completed',
+      [OrderStatus.CANCELLED]: 'cancelled',
+    };
+    return map[status] ?? status.toLowerCase();
+  }
+
+  statusIcon(status: OrderStatus): string {
+    const map: Partial<Record<OrderStatus, string>> = {
+      [OrderStatus.RECEIVED]: 'inbox',
+      [OrderStatus.APPROVED]: 'thumb_up',
+      [OrderStatus.IN_PREPARATION]: 'soup_kitchen',
+      [OrderStatus.READY]: 'check_circle',
+      [OrderStatus.COMPLETED]: 'done_all',
+      [OrderStatus.CANCELLED]: 'cancel',
+    };
+    return map[status] ?? 'help_outline';
+  }
+
+  isStepDone(currentStatus: OrderStatus, stepStatus: OrderStatus): boolean {
+    const currentIdx = this.STATUS_ORDER.indexOf(currentStatus);
+    const stepIdx = this.STATUS_ORDER.indexOf(stepStatus);
+    return stepIdx < currentIdx;
+  }
+
+  /** Label shown on the ingredient status chip (reused for IngredientStatus union). */
   statusLabel(status: IngredientStatus): string {
     return status === IngredientStatus.AVAILABLE ? 'Available' : 'Unavailable';
   }
@@ -181,16 +257,54 @@ export class KitchenComponent implements OnDestroy {
     }
   }
 
-  async approveOrder(order: IOrder): Promise<void> {
+  /** Returns the next status the kitchen can advance to, or null if no action available. */
+  nextStatus(order: IOrder): OrderStatus | null {
+    return NEXT_STATUS[order.status] ?? null;
+  }
+
+  /** Returns the label for the primary action button for this order. */
+  actionLabel(order: IOrder): string {
+    return ACTION_LABELS[order.status] ?? '';
+  }
+
+  /**
+   * Advances an order to the next status in the kitchen workflow.
+   * Updates the order in place via socket (the customer sees it in real time);
+   * the kitchen list is refreshed locally from the server response.
+   */
+  async advanceStatus(order: IOrder): Promise<void> {
+    const next = this.nextStatus(order);
+    if (!next) return;
+
+    this.updatingOrderId.set(order._id);
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
     try {
-      await this.orderService.updateStatus(order._id, { status: OrderStatus.APPROVED });
-      this.successMessage.set(`Order #${order._id.slice(-6)} approved.`);
-      await this.loadOrders();
+      const updated = await this.orderService.updateStatus(order._id, { status: next });
+
+      if (next === OrderStatus.COMPLETED) {
+        // Remove from queue — COMPLETED orders leave the kitchen view
+        this.orders.update((list) => list.filter((o) => o._id !== order._id));
+        this.orderChecks.update((checks) => {
+          const next = { ...checks };
+          delete next[order._id];
+          return next;
+        });
+        this.successMessage.set(`Order #${order._id.slice(-6).toUpperCase()} marked completed.`);
+      } else {
+        // Update the order status in the list without a full reload
+        this.orders.update((list) =>
+          list.map((o) => (o._id === updated._id ? updated : o))
+        );
+        this.successMessage.set(
+          `Order #${order._id.slice(-6).toUpperCase()} → ${next.replace('_', ' ')}`
+        );
+      }
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error, 'Failed to approve order.'));
+      this.errorMessage.set(getApiErrorMessage(error, 'Failed to update order status.'));
+    } finally {
+      this.updatingOrderId.set(null);
     }
   }
 

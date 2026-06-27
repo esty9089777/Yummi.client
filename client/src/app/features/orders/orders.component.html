@@ -39,8 +39,35 @@
               <span class="order-id">#{{ shortId(order._id) }}</span>
               <span class="order-date">{{ order.createdAt | date: 'medium' }}</span>
             </div>
-            <span class="status-chip" [class]="statusClass(order.status)">{{ order.status }}</span>
+            <span class="status-chip" [class]="statusClass(order.status)">
+              {{ statusLabel(order.status) }}
+            </span>
           </div>
+
+          @if (order.status !== OrderStatus.CANCELLED) {
+            <div class="status-stepper">
+              @for (step of orderSteps; track step.status) {
+                <div
+                  class="step"
+                  [class.step--done]="isStepDone(order.status, step.status)"
+                  [class.step--active]="order.status === step.status"
+                >
+                  <div class="step-dot">
+                    <mat-icon>{{ isStepDone(order.status, step.status) ? 'check' : step.icon }}</mat-icon>
+                  </div>
+                  <span class="step-label">{{ step.label }}</span>
+                </div>
+                @if (!$last) {
+                  <div class="step-line" [class.step-line--done]="isStepDone(order.status, step.status)"></div>
+                }
+              }
+            </div>
+          } @else {
+            <div class="cancelled-bar">
+              <mat-icon>cancel</mat-icon>
+              Order cancelled
+            </div>
+          }
 
           <div class="order-type">
             <mat-icon>{{ order.orderType === OrderType.DELIVERY ? 'delivery_dining' : 'store' }}</mat-icon>
