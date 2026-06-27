@@ -2,7 +2,7 @@
   <header class="employees-header">
     <div>
       <h1>Employee Management</h1>
-      <p>Create and manage kitchen, delivery, and admin staff.</p>
+      <p>Create and manage kitchen, delivery, and admin staff. Every employee also receives the Customer role and can switch profiles at any time.</p>
     </div>
     <a mat-button routerLink="/profile">Back to Profile</a>
   </header>
@@ -51,6 +51,7 @@
 
           <div class="roles-group">
             <span class="roles-label">Roles</span>
+            <mat-checkbox [checked]="true" [disabled]="true">CUSTOMER (always included)</mat-checkbox>
             @for (role of employeeRoles; track role) {
               <mat-checkbox
                 [checked]="isRoleSelected(role)"
