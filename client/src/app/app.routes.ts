@@ -121,6 +121,12 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard(UserRole.KITCHEN, UserRole.ADMIN)],
   },
   {
+    path: 'delivery',
+    loadComponent: () =>
+      import('./features/delivery/delivery.component').then((m) => m.DeliveryComponent),
+    canActivate: [authGuard, roleGuard(UserRole.DELIVERY, UserRole.ADMIN)],
+  },
+  {
     path: 'delivery-zones',
     loadComponent: () =>
       import('./features/delivery-zones/delivery-zones.component').then(

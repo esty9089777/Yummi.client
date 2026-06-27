@@ -21,7 +21,9 @@ import { CartService } from '../../services/cart.service';
 import { OrderService } from '../../services/order.service';
 import { DeliveryZoneService } from '../../services/delivery-zone.service';
 import { BusinessHoursService } from '../../services/business-hours.service';
+import { AuthService } from '../../services/auth.service';
 import { IDeliveryZone } from '../../core/models/delivery-zone.model';
+import { IDefaultAddress } from '../../core/models/user.model';
 import { OrderType } from '../../core/models/enums';
 import { getApiErrorMessage } from '../../core/utils/api-error.util';
 
@@ -50,6 +52,7 @@ export class CheckoutComponent implements OnInit {
   private readonly orderService = inject(OrderService);
   private readonly deliveryZoneService = inject(DeliveryZoneService);
   private readonly businessHoursService = inject(BusinessHoursService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   readonly OrderType = OrderType;
@@ -67,14 +70,37 @@ export class CheckoutComponent implements OnInit {
   readonly closedReason = signal<string | null>(null);
 
   readonly orderType = signal<OrderType>(OrderType.PICKUP);
+  readonly useSavedAddress = signal(false);
   readonly selectedCity = signal<string>('');
-  readonly deliveryAddress = signal<string>('');
+  readonly deliveryStreet = signal<string>('');
+  readonly deliveryHouseNumber = signal<string>('');
+
+  readonly savedAddress = computed<IDefaultAddress | null>(
+    () => this.authService.currentUser()?.defaultAddress ?? null,
+  );
+
+  readonly hasSavedAddress = computed(() => this.savedAddress() !== null);
 
   readonly isDelivery = computed(() => this.orderType() === OrderType.DELIVERY);
 
-  readonly selectedZone = computed<IDeliveryZone | null>(
-    () => this.zones().find((zone) => zone.city === this.selectedCity()) ?? null,
+  readonly usingSavedAddress = computed(
+    () => this.isDelivery() && this.hasSavedAddress() && this.useSavedAddress(),
   );
+
+  readonly effectiveCity = computed(() => {
+    if (this.usingSavedAddress()) {
+      return this.savedAddress()!.city;
+    }
+    return this.selectedCity();
+  });
+
+  readonly selectedZone = computed<IDeliveryZone | null>(() => {
+    const city = this.effectiveCity().trim();
+    if (!city) {
+      return null;
+    }
+    return this.zones().find((zone) => zone.city === city) ?? null;
+  });
 
   readonly deliveryFee = computed(() =>
     this.isDelivery() ? (this.selectedZone()?.deliveryPrice ?? 0) : 0,
@@ -88,10 +114,20 @@ export class CheckoutComponent implements OnInit {
     if (this.isEmpty() || !this.isOpen() || this.isPlacing()) {
       return false;
     }
-    if (this.isDelivery()) {
-      return this.selectedCity().trim().length > 0 && this.deliveryAddress().trim().length >= 2;
+    if (!this.isDelivery()) {
+      return true;
     }
-    return true;
+
+    if (this.usingSavedAddress()) {
+      return this.selectedZone() !== null;
+    }
+
+    return (
+      this.selectedCity().trim().length > 0 &&
+      this.deliveryStreet().trim().length >= 2 &&
+      this.deliveryHouseNumber().trim().length >= 1 &&
+      this.selectedZone() !== null
+    );
   });
 
   async ngOnInit(): Promise<void> {
@@ -108,6 +144,11 @@ export class CheckoutComponent implements OnInit {
       this.zones.set(zones.filter((zone) => zone.isActive));
       this.isOpen.set(openStatus.isOpen);
       this.closedReason.set(openStatus.isOpen ? null : openStatus.reason);
+
+      if (this.savedAddress()) {
+        this.useSavedAddress.set(true);
+        this.selectedCity.set(this.savedAddress()!.city);
+      }
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Failed to load checkout details.'));
     } finally {
@@ -118,6 +159,15 @@ export class CheckoutComponent implements OnInit {
   setOrderType(type: OrderType): void {
     this.orderType.set(type);
     this.errorMessage.set(null);
+  }
+
+  setUseSavedAddress(useSaved: boolean): void {
+    this.useSavedAddress.set(useSaved);
+    this.errorMessage.set(null);
+
+    if (useSaved && this.savedAddress()) {
+      this.selectedCity.set(this.savedAddress()!.city);
+    }
   }
 
   async placeOrder(): Promise<void> {
@@ -132,10 +182,12 @@ export class CheckoutComponent implements OnInit {
       const order = await this.orderService.createOrder({
         orderType: this.orderType(),
         ...(this.isDelivery()
-          ? {
-              deliveryCity: this.selectedCity().trim(),
-              deliveryAddress: this.deliveryAddress().trim(),
-            }
+          ? this.usingSavedAddress()
+            ? { useDefaultAddress: true }
+            : {
+                deliveryCity: this.selectedCity().trim(),
+                deliveryAddress: `${this.deliveryStreet().trim()} ${this.deliveryHouseNumber().trim()}`.trim(),
+              }
           : {}),
       });
 

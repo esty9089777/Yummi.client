@@ -27,19 +27,20 @@ import { IOrder } from '../../core/models/order.model';
 import { IngredientStatus, OrderStatus } from '../../core/models/enums';
 import { getApiErrorMessage } from '../../core/utils/api-error.util';
 
-/** Allowed forward transition for each status the kitchen can act on. */
+/**
+ * Allowed forward transitions for the kitchen.
+ * Kitchen's last action is "Mark Ready" — delivery handles READY → COMPLETED.
+ */
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   [OrderStatus.RECEIVED]: OrderStatus.APPROVED,
   [OrderStatus.APPROVED]: OrderStatus.IN_PREPARATION,
   [OrderStatus.IN_PREPARATION]: OrderStatus.READY,
-  [OrderStatus.READY]: OrderStatus.COMPLETED,
 };
 
 const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
   [OrderStatus.RECEIVED]: 'Approve',
   [OrderStatus.APPROVED]: 'Start Preparing',
   [OrderStatus.IN_PREPARATION]: 'Mark Ready',
-  [OrderStatus.READY]: 'Mark Completed',
 };
 
 @Component({
@@ -89,6 +90,7 @@ export class KitchenComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.socketService.off(SocketEvents.ORDER_CREATED);
+    this.socketService.off(SocketEvents.ORDER_READY);
     this.socketService.off(SocketEvents.ORDER_CANCELLED);
     this.socketService.off(SocketEvents.INGREDIENT_AVAILABILITY_CHANGED);
     this.socketService.off(SocketEvents.KITCHEN_ISSUE_REPORTED);
@@ -134,12 +136,11 @@ export class KitchenComponent implements OnDestroy {
     }
   }
 
-  /** Pipeline summary stages shown above the order list. */
+  /** Pipeline summary stages shown above the order list (kitchen handles up to IN_PREPARATION). */
   readonly pipelineStages = [
     { status: OrderStatus.RECEIVED, label: 'Received', icon: 'inbox', css: 'received' },
     { status: OrderStatus.APPROVED, label: 'Approved', icon: 'thumb_up', css: 'approved' },
     { status: OrderStatus.IN_PREPARATION, label: 'Preparing', icon: 'soup_kitchen', css: 'preparing' },
-    { status: OrderStatus.READY, label: 'Ready', icon: 'check_circle', css: 'ready' },
   ] as const;
 
   /** Steps shown inside each order card's stepper. */
@@ -193,7 +194,20 @@ export class KitchenComponent implements OnDestroy {
     return stepIdx < currentIdx;
   }
 
-  /** Label shown on the ingredient status chip (reused for IngredientStatus union). */
+  /** Label shown on the order status chip. */
+  orderStatusLabel(status: OrderStatus): string {
+    const map: Partial<Record<OrderStatus, string>> = {
+      [OrderStatus.RECEIVED]: 'Received',
+      [OrderStatus.APPROVED]: 'Approved',
+      [OrderStatus.IN_PREPARATION]: 'Preparing',
+      [OrderStatus.READY]: 'Ready',
+      [OrderStatus.COMPLETED]: 'Completed',
+      [OrderStatus.CANCELLED]: 'Cancelled',
+    };
+    return map[status] ?? status.replaceAll('_', ' ');
+  }
+
+  /** Label shown on the ingredient status chip. */
   statusLabel(status: IngredientStatus): string {
     return status === IngredientStatus.AVAILABLE ? 'Available' : 'Unavailable';
   }
@@ -281,24 +295,21 @@ export class KitchenComponent implements OnDestroy {
     this.successMessage.set(null);
 
     try {
-      const updated = await this.orderService.updateStatus(order._id, { status: next });
+      await this.orderService.updateStatus(order._id, { status: next });
 
-      if (next === OrderStatus.COMPLETED) {
-        // Remove from queue — COMPLETED orders leave the kitchen view
-        this.orders.update((list) => list.filter((o) => o._id !== order._id));
-        this.orderChecks.update((checks) => {
-          const next = { ...checks };
-          delete next[order._id];
-          return next;
-        });
-        this.successMessage.set(`Order #${order._id.slice(-6).toUpperCase()} marked completed.`);
+      // When marked READY, the order leaves the kitchen and goes to delivery.
+      // For all other transitions, update status in place.
+      if (next === OrderStatus.READY) {
+        this._removeFromKitchen(order._id);
+        this.successMessage.set(
+          `Order #${order._id.slice(-6).toUpperCase()} is ready — handed off to delivery.`
+        );
       } else {
-        // Update the order status in the list without a full reload
         this.orders.update((list) =>
-          list.map((o) => (o._id === updated._id ? updated : o))
+          list.map((o) => (o._id === order._id ? { ...o, status: next } : o))
         );
         this.successMessage.set(
-          `Order #${order._id.slice(-6).toUpperCase()} → ${next.replace('_', ' ')}`
+          `Order #${order._id.slice(-6).toUpperCase()} → ${next.replaceAll('_', ' ')}`
         );
       }
     } catch (error) {
@@ -311,6 +322,15 @@ export class KitchenComponent implements OnDestroy {
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
+
+  private _removeFromKitchen(orderId: string): void {
+    this.orders.update((list) => list.filter((o) => o._id !== orderId));
+    this.orderChecks.update((checks) => {
+      const updated = { ...checks };
+      delete updated[orderId];
+      return updated;
+    });
+  }
 
   private _registerSocketListeners(): void {
     // A new order was placed — add it to the queue and fetch its ingredient check.
@@ -333,14 +353,14 @@ export class KitchenComponent implements OnDestroy {
       );
     });
 
+    // Order marked READY — remove from kitchen (handed off to delivery).
+    this.socketService.on<IOrder>(SocketEvents.ORDER_READY, (readyOrder) => {
+      this._removeFromKitchen(readyOrder._id);
+    });
+
     // Customer cancelled their order — remove it from the kitchen queue.
     this.socketService.on<IOrder>(SocketEvents.ORDER_CANCELLED, (cancelledOrder) => {
-      this.orders.update((list) => list.filter((o) => o._id !== cancelledOrder._id));
-      this.orderChecks.update((checks) => {
-        const next = { ...checks };
-        delete next[cancelledOrder._id];
-        return next;
-      });
+      this._removeFromKitchen(cancelledOrder._id);
 
       this.snackBar.open(
         `Order #${cancelledOrder._id.slice(-6).toUpperCase()} was cancelled by the customer.`,

@@ -51,7 +51,7 @@
                     </mat-card-title>
                     <span class="status-chip" [class]="'status-chip--' + statusCss(order.status)">
                       <mat-icon class="status-icon">{{ statusIcon(order.status) }}</mat-icon>
-                      {{ statusLabel(order.status) }}
+                      {{ orderStatusLabel(order.status) }}
                     </span>
                   </div>
                   <mat-card-subtitle>
@@ -154,6 +154,8 @@
                       Updating...
                     } @else {
                       <mat-icon>{{ statusIcon(next) }}</mat-icon>
+                    }
+                    @if (updatingOrderId() !== order._id) {
                       {{ actionLabel(order) }}
                     }
                   </button>

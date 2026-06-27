@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../services/auth.service';
 import { BusinessHoursService } from '../../services/business-hours.service';
+import { UserRole } from '../../core/models/enums';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule, RouterLink],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,6 +19,7 @@ export class HomeComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly businessHoursService = inject(BusinessHoursService);
 
+  readonly UserRole = UserRole;
   readonly user = this.auth.currentUser;
   readonly activeRole = this.auth.activeRole;
   readonly isOpen = signal(true);

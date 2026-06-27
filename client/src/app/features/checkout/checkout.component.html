@@ -55,34 +55,76 @@
 
           @if (isDelivery()) {
             <div class="delivery-fields">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Delivery city</mat-label>
-                <mat-select
-                  [value]="selectedCity()"
-                  (selectionChange)="selectedCity.set($event.value)"
+              @if (hasSavedAddress()) {
+                <h3 class="delivery-section-title">Delivery address</h3>
+                <mat-button-toggle-group
+                  [value]="useSavedAddress()"
+                  (change)="setUseSavedAddress($event.value)"
+                  aria-label="Address source"
+                  class="address-toggle"
                 >
-                  @for (zone of zones(); track zone.id) {
-                    <mat-option [value]="zone.city">
-                      {{ zone.city }} — {{ formatPrice(zone.deliveryPrice) }},
-                      ~{{ zone.estimatedDeliveryMinutes }} min
-                    </mat-option>
-                  }
-                </mat-select>
-                @if (zones().length === 0) {
-                  <mat-hint>No delivery cities are currently available.</mat-hint>
-                }
-              </mat-form-field>
+                  <mat-button-toggle [value]="true">Saved address</mat-button-toggle>
+                  <mat-button-toggle [value]="false">Different address</mat-button-toggle>
+                </mat-button-toggle-group>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Delivery address</mat-label>
-                <textarea
-                  matInput
-                  rows="3"
-                  [value]="deliveryAddress()"
-                  (input)="deliveryAddress.set($any($event.target).value)"
-                  placeholder="Street, building, apartment…"
-                ></textarea>
-              </mat-form-field>
+                @if (usingSavedAddress()) {
+                  @if (savedAddress(); as address) {
+                    <div class="saved-address-preview">
+                      <mat-icon>home</mat-icon>
+                      <div>
+                        <strong>{{ address.street }} {{ address.houseNumber }}</strong>
+                        <span>{{ address.city }}</span>
+                      </div>
+                    </div>
+                    @if (!selectedZone()) {
+                      <p class="address-warning" role="alert">
+                        Your saved city is not available for delivery right now. Choose a
+                        different address or update your profile.
+                      </p>
+                    }
+                  }
+                }
+              }
+
+              @if (!hasSavedAddress() || !useSavedAddress()) {
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Delivery city</mat-label>
+                  <mat-select
+                    [value]="selectedCity()"
+                    (selectionChange)="selectedCity.set($event.value)"
+                  >
+                    @for (zone of zones(); track zone.id) {
+                      <mat-option [value]="zone.city">
+                        {{ zone.city }} — {{ formatPrice(zone.deliveryPrice) }},
+                        ~{{ zone.estimatedDeliveryMinutes }} min
+                      </mat-option>
+                    }
+                  </mat-select>
+                  @if (zones().length === 0) {
+                    <mat-hint>No delivery cities are currently available.</mat-hint>
+                  }
+                </mat-form-field>
+
+                <div class="address-fields">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Street</mat-label>
+                    <input
+                      matInput
+                      [value]="deliveryStreet()"
+                      (input)="deliveryStreet.set($any($event.target).value)"
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>House number</mat-label>
+                    <input
+                      matInput
+                      [value]="deliveryHouseNumber()"
+                      (input)="deliveryHouseNumber.set($any($event.target).value)"
+                    />
+                  </mat-form-field>
+                </div>
+              }
             </div>
           } @else {
             <p class="pickup-note">

@@ -41,8 +41,10 @@ export interface IOrdersResponse {
 
 export interface ICreateOrderDto {
   orderType: OrderType;
-  /** Required when orderType === DELIVERY. */
+  /** Use the customer's saved profile address for delivery. */
+  useDefaultAddress?: boolean;
+  /** Required when orderType === DELIVERY and useDefaultAddress is not true. */
   deliveryCity?: string;
-  /** Required when orderType === DELIVERY. */
+  /** Required when orderType === DELIVERY and useDefaultAddress is not true. */
   deliveryAddress?: string;
 }

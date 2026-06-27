@@ -1,0 +1,112 @@
+<section class="delivery-page">
+  <header class="delivery-header">
+    <div>
+      <h1>
+        <mat-icon>delivery_dining</mat-icon>
+        Delivery Dashboard
+      </h1>
+      <p>Orders that are ready for pickup or delivery.</p>
+    </div>
+    <a mat-button routerLink="/">Back to Home</a>
+  </header>
+
+  @if (successMessage(); as message) {
+    <p class="success-message" role="status">{{ message }}</p>
+  }
+  @if (errorMessage(); as error) {
+    <p class="error-message" role="alert">{{ error }}</p>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (orders().length === 0) {
+    <div class="empty-state">
+      <mat-icon>check_circle_outline</mat-icon>
+      <p>No orders waiting. All deliveries are complete!</p>
+    </div>
+  } @else {
+    <div class="orders-count">
+      <mat-icon>pending_actions</mat-icon>
+      {{ orders().length }} order{{ orders().length !== 1 ? 's' : '' }} waiting
+    </div>
+
+    <div class="orders-list">
+      @for (order of orders(); track order._id) {
+        <mat-card class="order-card" [class]="order.orderType === OrderType.DELIVERY ? 'order-card--delivery' : 'order-card--pickup'">
+          <mat-card-header>
+            <div class="order-header-content">
+              <div class="order-title-row">
+                <mat-card-title>
+                  Order #{{ order._id.slice(-6).toUpperCase() }}
+                </mat-card-title>
+                <span class="type-chip" [class]="order.orderType === OrderType.DELIVERY ? 'type-chip--delivery' : 'type-chip--pickup'">
+                  <mat-icon class="type-icon">{{ orderTypeIcon(order.orderType) }}</mat-icon>
+                  {{ orderTypeLabel(order.orderType) }}
+                </span>
+              </div>
+              <mat-card-subtitle>
+                {{ order.items.length }} item(s) &middot; {{ formatPrice(order.total) }}
+              </mat-card-subtitle>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <ul class="order-items-list">
+              @for (item of order.items; track item.productId) {
+                <li>
+                  <span class="item-qty">{{ item.quantity }}×</span>
+                  <span class="item-name">{{ item.name }}</span>
+                  @if (item.selectedExtras.length > 0) {
+                    <span class="item-extras">
+                      + {{ item.selectedExtras.map(e => e.name).join(', ') }}
+                    </span>
+                  }
+                </li>
+              }
+            </ul>
+
+            @if (order.orderType === OrderType.DELIVERY && order.deliveryAddress) {
+              <div class="delivery-address">
+                <mat-icon>location_on</mat-icon>
+                <div>
+                  <strong>{{ order.deliveryAddress }}</strong>
+                  @if (order.deliveryCity) {
+                    <span>{{ order.deliveryCity }}</span>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="pickup-note">
+                <mat-icon>store</mat-icon>
+                Customer picks up at the restaurant.
+              </div>
+            }
+          </mat-card-content>
+
+          <mat-card-actions>
+            <button
+              mat-flat-button
+              class="complete-btn"
+              type="button"
+              [disabled]="completingOrderId() === order._id"
+              (click)="markCompleted(order)"
+            >
+              @if (completingOrderId() === order._id) {
+                <mat-spinner diameter="18" />
+              } @else {
+                <mat-icon>done_all</mat-icon>
+              }
+              @if (completingOrderId() !== order._id) {
+                Mark Completed
+              } @else {
+                Completing…
+              }
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+</section>

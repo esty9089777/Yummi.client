@@ -55,6 +55,13 @@ export class OrderService {
     return order;
   }
 
+  /** Returns orders that are READY and waiting for pickup/delivery (delivery workers). */
+  async getDeliveryOrders(): Promise<IOrder[]> {
+    const res = await this.api.http.get<ApiResponse<IOrdersResponse>>('/orders/delivery');
+    const { orders } = this.api.unwrap(res);
+    return orders ?? [];
+  }
+
   /** Returns the authenticated user's own orders, newest first. */
   async getMyOrders(): Promise<IOrder[]> {
     const res = await this.api.http.get<ApiResponse<IOrdersResponse>>('/orders/my');
