@@ -24,6 +24,18 @@
       <a mat-flat-button color="primary" routerLink="/menu">Browse the menu</a>
     </div>
   } @else {
+    @if (!isOpen()) {
+      <div class="closed-banner" role="alert">
+        <mat-icon>schedule</mat-icon>
+        <div>
+          <strong>The restaurant is currently closed.</strong>
+          @if (closedReason(); as reason) {
+            <span>{{ reason }}</span>
+          }
+        </div>
+      </div>
+    }
+
     <div class="cart-layout">
       <div class="cart-items">
         @for (item of items(); track item._id) {
@@ -99,10 +111,17 @@
           <span>{{ formatPrice(subtotal()) }}</span>
         </div>
         <p class="summary-hint">Delivery fee (if any) is calculated at checkout.</p>
-        <a mat-flat-button color="primary" routerLink="/checkout" class="checkout-btn">
-          Proceed to checkout
-          <mat-icon>arrow_forward</mat-icon>
-        </a>
+        @if (isOpen()) {
+          <a mat-flat-button color="primary" routerLink="/checkout" class="checkout-btn">
+            Proceed to checkout
+            <mat-icon>arrow_forward</mat-icon>
+          </a>
+        } @else {
+          <button mat-flat-button class="checkout-btn" disabled>
+            Proceed to checkout
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        }
       </mat-card>
     </div>
   }

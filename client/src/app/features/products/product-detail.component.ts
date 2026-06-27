@@ -18,6 +18,7 @@ import { ProductService } from '../../services/product.service';
 import { IngredientService } from '../../services/ingredient.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { BusinessHoursService } from '../../services/business-hours.service';
 import { IProduct } from '../../core/models/product.model';
 import { IIngredient } from '../../core/models/ingredient.model';
 import { IngredientStatus, UserRole } from '../../core/models/enums';
@@ -52,6 +53,7 @@ export class ProductDetailComponent implements OnInit {
   private readonly cartService = inject(CartService);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly businessHoursService = inject(BusinessHoursService);
 
   readonly product = signal<IProduct | null>(null);
   readonly isLoading = signal(true);
@@ -66,9 +68,14 @@ export class ProductDetailComponent implements OnInit {
   readonly addToCartError = signal<string | null>(null);
   readonly addedToCart = signal(false);
 
+  readonly isOpen = signal(true);
+  readonly closedReason = signal<string | null>(null);
+
   readonly isCustomer = computed(() => this.auth.activeRole() === UserRole.CUSTOMER);
 
-  readonly canOrder = computed(() => this.isCustomer() && (this.product()?.isAvailable ?? false));
+  readonly canOrder = computed(
+    () => this.isCustomer() && (this.product()?.isAvailable ?? false) && this.isOpen(),
+  );
 
   readonly backLink = computed(() => {
     const categoryId = this.returnCategoryId();
@@ -96,8 +103,13 @@ export class ProductDetailComponent implements OnInit {
     this.errorMessage.set(null);
 
     try {
-      const item = await this.productService.getById(id);
+      const [item, openStatus] = await Promise.all([
+        this.productService.getById(id),
+        this.businessHoursService.isOpenNow(),
+      ]);
       this.product.set(item);
+      this.isOpen.set(openStatus.isOpen);
+      this.closedReason.set(openStatus.isOpen ? null : openStatus.reason);
 
       if (!this.returnCategoryId() && item.categories.length > 0) {
         this.returnCategoryId.set(item.categories[0]);

@@ -67,6 +67,18 @@
           </div>
         }
 
+        @if (!isOpen()) {
+          <div class="closed-banner" role="alert">
+            <mat-icon>schedule</mat-icon>
+            <div>
+              <strong>The restaurant is currently closed.</strong>
+              @if (closedReason(); as reason) {
+                <span>{{ reason }}</span>
+              }
+            </div>
+          </div>
+        }
+
         @if (canOrder()) {
           <mat-divider />
 
@@ -106,6 +118,8 @@
           }
         } @else if (!item.isAvailable) {
           <p class="order-disabled">This item is currently unavailable.</p>
+        } @else if (!isOpen()) {
+          <p class="order-disabled">Ordering is not available while the restaurant is closed.</p>
         }
       </div>
     </div>

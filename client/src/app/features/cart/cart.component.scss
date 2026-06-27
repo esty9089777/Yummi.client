@@ -53,6 +53,28 @@
   }
 }
 
+.closed-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+
+  mat-icon {
+    color: #e65100;
+    flex-shrink: 0;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+}
+
 .cart-layout {
   display: grid;
   grid-template-columns: 1fr 320px;

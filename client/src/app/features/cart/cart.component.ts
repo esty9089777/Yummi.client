@@ -13,6 +13,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CartService } from '../../services/cart.service';
+import { BusinessHoursService } from '../../services/business-hours.service';
 import { ICartItem } from '../../core/models/cart.model';
 import { getApiErrorMessage } from '../../core/utils/api-error.util';
 
@@ -34,6 +35,7 @@ import { getApiErrorMessage } from '../../core/utils/api-error.util';
 })
 export class CartComponent implements OnInit {
   private readonly cartService = inject(CartService);
+  private readonly businessHoursService = inject(BusinessHoursService);
 
   readonly items = this.cartService.items;
   readonly subtotal = this.cartService.subtotal;
@@ -41,8 +43,9 @@ export class CartComponent implements OnInit {
 
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
-  /** Tracks which line is mid-update so its buttons can be disabled. */
   readonly busyItemId = signal<string | null>(null);
+  readonly isOpen = signal(true);
+  readonly closedReason = signal<string | null>(null);
 
   async ngOnInit(): Promise<void> {
     await this.reload();
@@ -89,7 +92,12 @@ export class CartComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
     try {
-      await this.cartService.load();
+      const [, openStatus] = await Promise.all([
+        this.cartService.load(),
+        this.businessHoursService.isOpenNow(),
+      ]);
+      this.isOpen.set(openStatus.isOpen);
+      this.closedReason.set(openStatus.isOpen ? null : openStatus.reason);
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Failed to load your cart.'));
     } finally {

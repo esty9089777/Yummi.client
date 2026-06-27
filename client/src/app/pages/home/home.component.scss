@@ -4,3 +4,28 @@
   align-items: center;
   padding: 2rem;
 }
+
+.closed-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+
+  mat-icon {
+    color: #e65100;
+    flex-shrink: 0;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+}
