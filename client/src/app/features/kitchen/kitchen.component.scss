@@ -294,7 +294,7 @@ mat-card-actions {
   gap: 6px;
   font-weight: 600;
 
-  mat-spinner { display: inline-block; }
+  .btn-spinner { display: inline-flex; }
 
   &--approved  { background: $bg-approved;  color: $status-approved  !important; }
   &--preparing { background: $bg-preparing; color: $status-preparing !important; }

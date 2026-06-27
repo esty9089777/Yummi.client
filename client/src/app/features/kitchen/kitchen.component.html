@@ -150,14 +150,11 @@
                     (click)="advanceStatus(order)"
                   >
                     @if (updatingOrderId() === order._id) {
-                      <mat-spinner diameter="18" />
-                      Updating...
+                      <mat-spinner diameter="18" class="btn-spinner" />
                     } @else {
                       <mat-icon>{{ statusIcon(next) }}</mat-icon>
                     }
-                    @if (updatingOrderId() !== order._id) {
-                      {{ actionLabel(order) }}
-                    }
+                    <span>{{ updatingOrderId() === order._id ? 'Updating…' : actionLabel(order) }}</span>
                   </button>
                 }
               </mat-card-actions>

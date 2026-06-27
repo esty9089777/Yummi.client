@@ -90,6 +90,8 @@ export class KitchenComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.socketService.off(SocketEvents.ORDER_CREATED);
+    this.socketService.off(SocketEvents.ORDER_APPROVED);
+    this.socketService.off(SocketEvents.ORDER_IN_PREPARATION);
     this.socketService.off(SocketEvents.ORDER_READY);
     this.socketService.off(SocketEvents.ORDER_CANCELLED);
     this.socketService.off(SocketEvents.INGREDIENT_AVAILABILITY_CHANGED);
@@ -352,6 +354,15 @@ export class KitchenComponent implements OnDestroy {
         { duration: 6000, panelClass: 'snack-info', horizontalPosition: 'end', verticalPosition: 'top' },
       );
     });
+
+    // Status updates from other sessions (admin, concurrent kitchen tab) — update in place.
+    const updateInPlace = (updated: IOrder) => {
+      this.orders.update((list) =>
+        list.map((o) => (o._id === updated._id ? updated : o))
+      );
+    };
+    this.socketService.on<IOrder>(SocketEvents.ORDER_APPROVED, updateInPlace);
+    this.socketService.on<IOrder>(SocketEvents.ORDER_IN_PREPARATION, updateInPlace);
 
     // Order marked READY — remove from kitchen (handed off to delivery).
     this.socketService.on<IOrder>(SocketEvents.ORDER_READY, (readyOrder) => {
