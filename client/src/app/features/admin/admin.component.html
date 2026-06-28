@@ -4,10 +4,11 @@
     <a mat-button routerLink="/">Back to Home</a>
   </header>
 
-  <p>Admin dashboard — additional modules will be added here.</p>
-
   @if (isAdmin()) {
     <div class="admin-links">
+      <a mat-flat-button color="primary" routerLink="/admin/dashboard">
+        Statistics dashboard
+      </a>
       <a mat-flat-button color="primary" routerLink="/admin/employees">
         Manage employees
       </a>

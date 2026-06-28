@@ -52,6 +52,10 @@
       }
 
       @if (isRole(UserRole.ADMIN)) {
+        <a mat-button routerLink="/admin/dashboard" routerLinkActive="nav-active">
+          <mat-icon>insights</mat-icon>
+          Dashboard
+        </a>
         <a mat-button routerLink="/admin/categories" routerLinkActive="nav-active">
           <mat-icon>category</mat-icon>
           Categories

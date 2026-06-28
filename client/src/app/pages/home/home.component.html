@@ -42,7 +42,10 @@
     }
 
     @if (activeRole() === UserRole.ADMIN) {
-      <a mat-flat-button color="primary" routerLink="/admin">
+      <a mat-flat-button color="primary" routerLink="/admin/dashboard">
+        <mat-icon>insights</mat-icon> Statistics Dashboard
+      </a>
+      <a mat-stroked-button routerLink="/admin">
         <mat-icon>admin_panel_settings</mat-icon> Admin Panel
       </a>
       <a mat-stroked-button routerLink="/kitchen">
