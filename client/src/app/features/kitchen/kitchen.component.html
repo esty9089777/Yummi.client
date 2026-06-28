@@ -2,7 +2,13 @@
   <header class="kitchen-header">
     <div>
       <h1>Kitchen Dashboard</h1>
-      <p>Manage ingredient stock and advance orders through the kitchen pipeline.</p>
+      <p>
+        @if (isKitchenWorker()) {
+          View and download active kitchen orders.
+        } @else {
+          Manage ingredient stock and advance orders through the kitchen pipeline.
+        }
+      </p>
     </div>
     <a mat-button routerLink="/">Back to Home</a>
   </header>
@@ -18,6 +24,18 @@
 
     <!-- ───────────────── ORDERS TAB ───────────────── -->
     <mat-tab label="Orders">
+      <div class="tab-toolbar">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="downloadOrders()"
+          [disabled]="orders().length === 0"
+        >
+          <mat-icon>download</mat-icon>
+          Download orders
+        </button>
+      </div>
+
       @if (isLoadingOrders()) {
         <div class="loading-state">
           <mat-spinner diameter="32" />
@@ -165,6 +183,7 @@
       }
     </mat-tab>
 
+    @if (!isKitchenWorker()) {
     <!-- ───────────────── INGREDIENTS TAB ───────────────── -->
     <mat-tab label="Ingredients">
       @if (isLoadingIngredients()) {
@@ -231,6 +250,7 @@
         </div>
       }
     </mat-tab>
+    }
 
   </mat-tab-group>
 </section>

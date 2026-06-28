@@ -35,6 +35,12 @@ $bg-cancelled:  #ffebee;
   p  { margin: 0.25rem 0 0; color: #555; font-size: 0.9rem; }
 }
 
+.tab-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 0 0.75rem;
+}
+
 .success-message {
   color: #2e7d32;
   background: #e8f5e9;

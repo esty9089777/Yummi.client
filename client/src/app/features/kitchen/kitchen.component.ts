@@ -3,6 +3,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -24,8 +25,9 @@ import { AuthService } from '../../services/auth.service';
 import { SocketService, SocketEvents } from '../../core/services/socket.service';
 import { IIngredient } from '../../core/models/ingredient.model';
 import { IOrder } from '../../core/models/order.model';
-import { IngredientStatus, OrderStatus } from '../../core/models/enums';
+import { IngredientStatus, OrderStatus, UserRole } from '../../core/models/enums';
 import { getApiErrorMessage } from '../../core/utils/api-error.util';
+import { exportOrdersCsv } from '../../core/utils/order-export.util';
 
 /**
  * Allowed forward transitions for the kitchen.
@@ -82,6 +84,8 @@ export class KitchenComponent implements OnDestroy {
   readonly reportingIngredientId = signal<string | null>(null);
   readonly updatingOrderId = signal<string | null>(null);
 
+  readonly isKitchenWorker = computed(() => this.auth.activeRole() === UserRole.KITCHEN);
+
   constructor() {
     afterNextRender(() => {
       void this.loadAll().then(() => this._registerSocketListeners());
@@ -100,6 +104,12 @@ export class KitchenComponent implements OnDestroy {
 
   async loadAll(): Promise<void> {
     await this.auth.ensureSessionInitialized();
+
+    if (this.auth.activeRole() === UserRole.KITCHEN) {
+      await this.loadOrders();
+      return;
+    }
+
     await Promise.all([this.loadIngredients(), this.loadOrders()]);
   }
 
@@ -220,6 +230,10 @@ export class KitchenComponent implements OnDestroy {
 
   formatMissingNames(items: { name: string }[]): string {
     return items.map((item) => item.name).join(', ');
+  }
+
+  downloadOrders(): void {
+    exportOrdersCsv(this.orders(), `yummi-kitchen-orders-${Date.now()}.csv`);
   }
 
   async toggleIngredientStatus(ingredient: IIngredient): Promise<void> {
@@ -384,6 +398,10 @@ export class KitchenComponent implements OnDestroy {
     this.socketService.on<{ ingredientId: string; status: string }>(
       SocketEvents.INGREDIENT_AVAILABILITY_CHANGED,
       () => {
+        if (this.isKitchenWorker()) {
+          void this.loadOrders().catch(() => undefined);
+          return;
+        }
         void this.loadAll().catch(() => undefined);
       },
     );
