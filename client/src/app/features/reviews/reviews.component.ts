@@ -20,7 +20,7 @@ import { OrderService } from '../../services/order.service';
 import { ReviewService } from '../../services/review.service';
 import { IReview } from '../../core/models/review.model';
 import { IOrder } from '../../core/models/order.model';
-import { OrderStatus, ReviewType, UserRole } from '../../core/models/enums';
+import { OrderStatus, UserRole } from '../../core/models/enums';
 import { getApiErrorMessage } from '../../core/utils/api-error.util';
 
 @Component({
@@ -48,7 +48,7 @@ export class ReviewsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   readonly reviews = signal<IReview[]>([]);
-  readonly reviewableOrders = signal<IOrder[]>([]);
+  readonly completedOrders = signal<IOrder[]>([]);
   readonly isLoading = signal(true);
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -66,10 +66,14 @@ export class ReviewsComponent implements OnInit {
     return Math.round((sum / items.length) * 10) / 10;
   });
 
+  readonly reviewableOrders = computed(() => {
+    const reviewed = new Set(this.reviews().map((review) => review.orderId));
+    return this.completedOrders().filter((order) => !reviewed.has(order._id));
+  });
+
   readonly reviewForm = this.fb.nonNullable.group({
     orderId: ['', Validators.required],
-    title: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
-    comment: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(1000)]],
+    comment: ['', Validators.maxLength(1000)],
   });
 
   ngOnInit(): void {
@@ -82,24 +86,19 @@ export class ReviewsComponent implements OnInit {
 
     try {
       const [reviews, orders] = await Promise.all([
-        this.reviewService.getStoreReviews(),
+        this.reviewService.getAll(),
         this.isCustomer() ? this.orderService.getMyOrders() : Promise.resolve([]),
       ]);
 
       this.reviews.set(reviews);
 
-      const reviewedOrderIds = new Set(
-        reviews.map((review) => review.orderId).filter((id): id is string => !!id),
-      );
-
-      this.reviewableOrders.set(
-        orders.filter(
-          (order) =>
-            order.status === OrderStatus.COMPLETED && !reviewedOrderIds.has(order._id),
-        ),
-      );
+      if (this.isCustomer()) {
+        this.completedOrders.set(
+          orders.filter((order) => order.status === OrderStatus.COMPLETED),
+        );
+      }
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error, 'Failed to load store reviews.'));
+      this.errorMessage.set(getApiErrorMessage(error, 'Failed to load reviews.'));
     } finally {
       this.isLoading.set(false);
     }
@@ -132,22 +131,20 @@ export class ReviewsComponent implements OnInit {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    const { orderId, title, comment } = this.reviewForm.getRawValue();
+    const { orderId, comment } = this.reviewForm.getRawValue();
+    const trimmedComment = comment.trim();
 
     try {
       const review = await this.reviewService.create({
-        type: ReviewType.STORE,
         orderId,
-        title: title.trim(),
         rating: this.selectedRating(),
-        comment: comment.trim(),
+        ...(trimmedComment ? { comment: trimmedComment } : {}),
       });
 
       this.reviews.update((items) => [review, ...items]);
-      this.reviewableOrders.update((orders) => orders.filter((order) => order._id !== orderId));
       this.reviewForm.reset();
       this.selectedRating.set(0);
-      this.successMessage.set('Thank you! Your store review was published.');
+      this.successMessage.set('Thank you! Your review was submitted.');
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Could not submit your review.'));
     } finally {

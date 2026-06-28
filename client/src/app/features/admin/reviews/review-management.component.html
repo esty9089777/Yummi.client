@@ -1,15 +1,12 @@
 <section class="reviews-admin-page">
   <header class="reviews-admin-header">
     <div>
-      <h1>Review Moderation</h1>
-      <p>View customer feedback and remove inappropriate reviews.</p>
+      <h1>Reviews</h1>
+      <p>All customer reviews submitted for completed orders.</p>
     </div>
     <a mat-button routerLink="/admin">Back to Admin</a>
   </header>
 
-  @if (successMessage(); as message) {
-    <p class="success-message">{{ message }}</p>
-  }
   @if (errorMessage(); as error) {
     <p class="error-message" role="alert">{{ error }}</p>
   }
@@ -21,26 +18,16 @@
   } @else if (reviews().length === 0) {
     <mat-card>
       <mat-card-content>
-        <p class="empty-state">No reviews to moderate.</p>
+        <p class="empty-state">No reviews yet.</p>
       </mat-card-content>
     </mat-card>
   } @else {
     <mat-card>
       <mat-card-content>
         <table mat-table [dataSource]="reviews()" class="reviews-table">
-          <ng-container matColumnDef="type">
-            <th mat-header-cell *matHeaderCellDef>Type</th>
-            <td mat-cell *matCellDef="let review">
-              <mat-chip>{{ typeLabel(review.type) }}</mat-chip>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="title">
-            <th mat-header-cell *matHeaderCellDef>Title</th>
-            <td mat-cell *matCellDef="let review">
-              <strong>{{ review.title }}</strong>
-              <div class="target-label">{{ targetLabel(review) }}</div>
-            </td>
+          <ng-container matColumnDef="order">
+            <th mat-header-cell *matHeaderCellDef>Order</th>
+            <td mat-cell *matCellDef="let review">{{ orderLabel(review) }}</td>
           </ng-container>
 
           <ng-container matColumnDef="customer">
@@ -57,27 +44,14 @@
 
           <ng-container matColumnDef="comment">
             <th mat-header-cell *matHeaderCellDef>Comment</th>
-            <td mat-cell *matCellDef="let review" class="comment-cell">{{ review.comment }}</td>
+            <td mat-cell *matCellDef="let review" class="comment-cell">
+              {{ review.comment || '—' }}
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="createdAt">
             <th mat-header-cell *matHeaderCellDef>Date</th>
             <td mat-cell *matCellDef="let review">{{ review.createdAt | date: 'mediumDate' }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Actions</th>
-            <td mat-cell *matCellDef="let review">
-              <button
-                mat-stroked-button
-                color="warn"
-                type="button"
-                [disabled]="deletingId() === review.id"
-                (click)="deleteReview(review)"
-              >
-                Delete
-              </button>
-            </td>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

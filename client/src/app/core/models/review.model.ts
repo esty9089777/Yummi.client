@@ -1,28 +1,18 @@
-import { ReviewType } from './enums';
-
 export interface IReview {
   id: string;
-  type: ReviewType;
-  title: string;
-  orderId?: string;
-  productId?: string;
-  productName?: string;
+  orderId: string;
   customerId: string;
   customerName: string;
   rating: number;
-  comment: string;
+  comment?: string;
   createdAt: string;
   updatedAt: string;
-  isDeleted?: boolean;
 }
 
 export interface ICreateReviewDto {
-  type: ReviewType;
-  title: string;
+  orderId: string;
   rating: number;
-  comment: string;
-  orderId?: string;
-  productId?: string;
+  comment?: string;
 }
 
 export interface IReviewsResponse {

@@ -1,8 +1,8 @@
 <section class="reviews-page">
   <header class="reviews-header">
     <div>
-      <h1>Store Reviews</h1>
-      <p>See what customers think about Yummi and share your own experience.</p>
+      <h1>Reviews</h1>
+      <p>See what customers say about their orders. Submit your own after a completed order.</p>
     </div>
     @if (reviews().length > 0) {
       <div class="summary-badge">
@@ -20,93 +20,92 @@
     <p class="error-message" role="alert">{{ error }}</p>
   }
 
-  @if (isCustomer() && reviewableOrders().length > 0) {
-    <mat-card class="write-review-card">
-      <mat-card-header>
-        <mat-card-title>Write a store review</mat-card-title>
-        <mat-card-subtitle>One review per completed order</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="review-form">
-          <mat-form-field appearance="outline">
-            <mat-label>Completed order</mat-label>
-            <mat-select formControlName="orderId">
-              @for (order of reviewableOrders(); track order._id) {
-                <mat-option [value]="order._id">
-                  Order #{{ shortOrderId(order._id) }} — {{ order.createdAt | date: 'mediumDate' }}
-                </mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Review title</mat-label>
-            <input matInput formControlName="title" placeholder="Name your review" />
-          </mat-form-field>
-
-          <div class="rating-picker">
-            <span class="rating-label">Rating</span>
-            <div class="stars">
-              @for (star of [1, 2, 3, 4, 5]; track star) {
-                <button
-                  type="button"
-                  mat-icon-button
-                  [attr.aria-label]="star + ' stars'"
-                  (click)="setRating(star)"
-                >
-                  <mat-icon>{{ star <= selectedRating() ? 'star' : 'star_border' }}</mat-icon>
-                </button>
-              }
-            </div>
-          </div>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Your review</mat-label>
-            <textarea matInput rows="4" formControlName="comment"></textarea>
-          </mat-form-field>
-
-          <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()">
-            @if (isSubmitting()) {
-              <mat-spinner diameter="20" />
-            } @else {
-              Submit review
-            }
-          </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
-  }
-
   @if (isLoading()) {
     <div class="loading-state">
       <mat-spinner diameter="40" />
     </div>
-  } @else if (reviews().length === 0) {
-    <mat-card>
-      <mat-card-content>
-        <p class="empty-state">No store reviews yet. Be the first to share your experience!</p>
-      </mat-card-content>
-    </mat-card>
   } @else {
-    <div class="reviews-list">
-      @for (review of reviews(); track review.id) {
-        <mat-card class="review-card">
-          <mat-card-header>
-            <mat-card-title>{{ review.title }}</mat-card-title>
-            <mat-card-subtitle>
-              {{ review.customerName }} · {{ review.createdAt | date: 'mediumDate' }}
-            </mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="review-stars" aria-label="{{ review.rating }} out of 5 stars">
-              @for (filled of starsArray(review.rating); track $index) {
-                <mat-icon>{{ filled ? 'star' : 'star_border' }}</mat-icon>
-              }
+    @if (isCustomer() && reviewableOrders().length > 0) {
+      <mat-card class="write-review-card">
+        <mat-card-header>
+          <mat-card-title>Write a review</mat-card-title>
+          <mat-card-subtitle>One review per completed order</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="review-form">
+            <mat-form-field appearance="outline">
+              <mat-label>Completed order</mat-label>
+              <mat-select formControlName="orderId">
+                @for (order of reviewableOrders(); track order._id) {
+                  <mat-option [value]="order._id">
+                    Order #{{ shortOrderId(order._id) }} — {{ order.createdAt | date: 'mediumDate' }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <div class="rating-picker">
+              <span class="rating-label">Rating</span>
+              <div class="stars">
+                @for (star of [1, 2, 3, 4, 5]; track star) {
+                  <button
+                    type="button"
+                    mat-icon-button
+                    [attr.aria-label]="star + ' stars'"
+                    (click)="setRating(star)"
+                  >
+                    <mat-icon>{{ star <= selectedRating() ? 'star' : 'star_border' }}</mat-icon>
+                  </button>
+                }
+              </div>
             </div>
-            <p class="review-comment">{{ review.comment }}</p>
-          </mat-card-content>
-        </mat-card>
-      }
-    </div>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Comment (optional)</mat-label>
+              <textarea matInput rows="4" formControlName="comment"></textarea>
+            </mat-form-field>
+
+            <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                <mat-spinner diameter="20" />
+              } @else {
+                Submit review
+              }
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    @if (reviews().length === 0) {
+      <mat-card>
+        <mat-card-content>
+          <p class="empty-state">No reviews yet.</p>
+        </mat-card-content>
+      </mat-card>
+    } @else {
+      <div class="reviews-list">
+        @for (review of reviews(); track review.id) {
+          <mat-card class="review-card">
+            <mat-card-header>
+              <mat-card-title>Order #{{ shortOrderId(review.orderId) }}</mat-card-title>
+              <mat-card-subtitle>
+                {{ review.customerName }} · {{ review.createdAt | date: 'mediumDate' }}
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="review-stars" [attr.aria-label]="review.rating + ' out of 5 stars'">
+                @for (filled of starsArray(review.rating); track $index) {
+                  <mat-icon>{{ filled ? 'star' : 'star_border' }}</mat-icon>
+                }
+              </div>
+              @if (review.comment) {
+                <p class="review-comment">{{ review.comment }}</p>
+              }
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    }
   }
 </section>
