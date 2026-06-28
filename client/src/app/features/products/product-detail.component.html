@@ -123,5 +123,90 @@
         }
       </div>
     </div>
+
+    <section class="product-reviews-section">
+      <div class="reviews-section-header">
+        <h2>Product Reviews</h2>
+        @if (productReviews().length > 0) {
+          <span class="reviews-summary">
+            <mat-icon>star</mat-icon>
+            {{ averageProductRating() }} / 5 ({{ productReviews().length }})
+          </span>
+        }
+      </div>
+
+      @if (canReviewProduct()) {
+        <mat-card class="product-review-form-card">
+          <mat-card-header>
+            <mat-card-title>Write a product review</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (reviewSuccessMessage(); as message) {
+              <p class="review-success">{{ message }}</p>
+            }
+            @if (reviewErrorMessage(); as error) {
+              <p class="review-error" role="alert">{{ error }}</p>
+            }
+
+            <form [formGroup]="reviewForm" (ngSubmit)="submitProductReview()" class="review-form">
+              <mat-form-field appearance="outline">
+                <mat-label>Review title</mat-label>
+                <input matInput formControlName="title" placeholder="Name your review" />
+              </mat-form-field>
+
+              <div class="rating-picker">
+                <span class="rating-label">Rating</span>
+                <div class="stars">
+                  @for (star of [1, 2, 3, 4, 5]; track star) {
+                    <button
+                      type="button"
+                      mat-icon-button
+                      [attr.aria-label]="star + ' stars'"
+                      (click)="setReviewRating(star)"
+                    >
+                      <mat-icon>{{ star <= selectedReviewRating() ? 'star' : 'star_border' }}</mat-icon>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Your review</mat-label>
+                <textarea matInput rows="3" formControlName="comment"></textarea>
+              </mat-form-field>
+
+              <button mat-stroked-button color="primary" type="submit" [disabled]="isSubmittingReview()">
+                Submit review
+              </button>
+            </form>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      @if (productReviews().length === 0) {
+        <p class="reviews-empty">No product reviews yet.</p>
+      } @else {
+        <div class="product-reviews-list">
+          @for (review of productReviews(); track review.id) {
+            <mat-card class="product-review-card">
+              <mat-card-header>
+                <mat-card-title>{{ review.title }}</mat-card-title>
+                <mat-card-subtitle>
+                  {{ review.customerName }} · {{ review.createdAt | date: 'mediumDate' }}
+                </mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="review-stars">
+                  @for (filled of starsArray(review.rating); track $index) {
+                    <mat-icon>{{ filled ? 'star' : 'star_border' }}</mat-icon>
+                  }
+                </div>
+                <p>{{ review.comment }}</p>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      }
+    </section>
   }
 </section>

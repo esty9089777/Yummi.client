@@ -29,3 +29,8 @@ export enum PaymentStatus {
   PAID = 'PAID',
   FAILED = 'FAILED',
 }
+
+export enum ReviewType {
+  STORE = 'STORE',
+  PRODUCT = 'PRODUCT',
+}

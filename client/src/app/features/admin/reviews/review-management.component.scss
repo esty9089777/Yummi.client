@@ -1,0 +1,53 @@
+.reviews-admin-page {
+  padding: 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.reviews-admin-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.reviews-table {
+  width: 100%;
+}
+
+.target-label {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.comment-cell {
+  max-width: 280px;
+  white-space: normal;
+}
+
+.rating-stars {
+  color: #ffb300;
+  letter-spacing: 0.05em;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.empty-state {
+  margin: 0;
+  color: #666;
+}
+
+.success-message {
+  color: #2e7d32;
+  margin-bottom: 0.75rem;
+}
+
+.error-message {
+  color: #c62828;
+  margin-bottom: 0.75rem;
+}

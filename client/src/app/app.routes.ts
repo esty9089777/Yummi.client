@@ -46,6 +46,14 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
   },
   {
+    path: 'admin/reviews',
+    loadComponent: () =>
+      import('./features/admin/reviews/review-management.component').then(
+        (m) => m.ReviewManagementComponent,
+      ),
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
+  },
+  {
     path: 'admin/delivery-zones',
     loadComponent: () =>
       import('./features/admin/delivery-zones/delivery-zone-management.component').then(
@@ -104,6 +112,12 @@ export const routes: Routes = [
     path: 'orders',
     loadComponent: () =>
       import('./features/orders/orders.component').then((m) => m.OrdersComponent),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'reviews',
+    loadComponent: () =>
+      import('./features/reviews/reviews.component').then((m) => m.ReviewsComponent),
     canActivate: [authGuard],
   },
   {
