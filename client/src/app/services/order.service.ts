@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import type { ApiResponse } from '../core/models/api-response.model';
-import { IOrder } from '../core/models/order.model';
+import { ICreateOrderDto, IOrder } from '../core/models/order.model';
 import { OrderStatus } from '../core/models/enums';
 
 export interface IOrdersResponse {
@@ -40,9 +40,43 @@ export interface IUpdateOrderStatusDto {
   status: OrderStatus;
 }
 
+export interface ICancelOrderDto {
+  reason: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private readonly api = inject(ApiService);
+
+  /** Places a new order from the current cart. Returns the created order. */
+  async createOrder(dto: ICreateOrderDto): Promise<IOrder> {
+    const res = await this.api.http.post<ApiResponse<IOrderResponse>>('/orders', dto);
+    const { order } = this.api.unwrap(res);
+    return order;
+  }
+
+  /** Returns orders that are READY and waiting for pickup/delivery (delivery workers). */
+  async getDeliveryOrders(): Promise<IOrder[]> {
+    const res = await this.api.http.get<ApiResponse<IOrdersResponse>>('/orders/delivery');
+    const { orders } = this.api.unwrap(res);
+    return orders ?? [];
+  }
+
+  /** Returns the authenticated user's own orders, newest first. */
+  async getMyOrders(): Promise<IOrder[]> {
+    const res = await this.api.http.get<ApiResponse<IOrdersResponse>>('/orders/my');
+    const { orders } = this.api.unwrap(res);
+    return orders ?? [];
+  }
+
+  async cancelOrder(orderId: string, dto: ICancelOrderDto): Promise<IOrder> {
+    const res = await this.api.http.post<ApiResponse<IOrderResponse>>(
+      `/orders/${orderId}/cancel`,
+      dto,
+    );
+    const { order } = this.api.unwrap(res);
+    return order;
+  }
 
   async getKitchenOrders(): Promise<IOrder[]> {
     const res = await this.api.http.get<ApiResponse<IOrdersResponse>>('/orders/kitchen');

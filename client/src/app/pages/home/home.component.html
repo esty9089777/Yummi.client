@@ -1,10 +1,64 @@
 <section class="home-page">
-  @if (user(); as currentUser) {
-    <h1>Welcome, {{ currentUser.fullName }}</h1>
-    <p>Signed in as <strong>{{ activeRole() }}</strong></p>
+  @if (!isOpen()) {
+    <div class="closed-banner" role="alert">
+      <mat-icon>schedule</mat-icon>
+      <div>
+        <strong>The restaurant is currently closed.</strong>
+        @if (closedReason(); as reason) {
+          <span>{{ reason }}</span>
+        }
+      </div>
+    </div>
   }
 
-  <button mat-stroked-button type="button" (click)="logout()">
-    Sign out
-  </button>
+  @if (user(); as currentUser) {
+    <h1>Welcome, {{ currentUser.fullName }}</h1>
+    <p class="role-label">Signed in as <strong>{{ activeRole() }}</strong></p>
+  }
+
+  <nav class="quick-nav">
+    @if (activeRole() === UserRole.CUSTOMER) {
+      <a mat-flat-button color="primary" routerLink="/menu">
+        <mat-icon>restaurant_menu</mat-icon> Menu
+      </a>
+      <a mat-stroked-button routerLink="/orders">
+        <mat-icon>receipt_long</mat-icon> My Orders
+      </a>
+      <a mat-stroked-button routerLink="/notifications">
+        <mat-icon>notifications</mat-icon> Notifications
+      </a>
+    }
+
+    @if (activeRole() === UserRole.KITCHEN) {
+      <a mat-flat-button color="primary" routerLink="/kitchen">
+        <mat-icon>soup_kitchen</mat-icon> Kitchen Dashboard
+      </a>
+    }
+
+    @if (activeRole() === UserRole.DELIVERY) {
+      <a mat-flat-button color="primary" routerLink="/delivery">
+        <mat-icon>delivery_dining</mat-icon> Delivery Dashboard
+      </a>
+    }
+
+    @if (activeRole() === UserRole.ADMIN) {
+      <a mat-flat-button color="primary" routerLink="/admin">
+        <mat-icon>admin_panel_settings</mat-icon> Admin Panel
+      </a>
+      <a mat-stroked-button routerLink="/kitchen">
+        <mat-icon>soup_kitchen</mat-icon> Kitchen
+      </a>
+      <a mat-stroked-button routerLink="/delivery">
+        <mat-icon>delivery_dining</mat-icon> Delivery
+      </a>
+    }
+
+    <a mat-stroked-button routerLink="/profile">
+      <mat-icon>person</mat-icon> Profile
+    </a>
+
+    <button mat-stroked-button type="button" (click)="logout()">
+      <mat-icon>logout</mat-icon> Sign out
+    </button>
+  </nav>
 </section>

@@ -1,0 +1,57 @@
+<section class="notifications-page">
+  <header class="page-header">
+    <h1>
+      <mat-icon>notifications</mat-icon>
+      Notifications
+    </h1>
+    @if (notifications().length > 0) {
+      <button mat-stroked-button (click)="markAllRead()">
+        <mat-icon>done_all</mat-icon>
+        Mark all as read
+      </button>
+    }
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (notifications().length === 0) {
+    <div class="empty-state">
+      <mat-icon>notifications_none</mat-icon>
+      <p>No notifications yet.</p>
+    </div>
+  } @else {
+    <div class="notifications-list">
+      @for (notification of notifications(); track trackById($index, notification)) {
+        <mat-card
+          class="notification-card"
+          [class.notification-card--unread]="!notification.isRead"
+          (click)="markRead(notification)"
+        >
+          <div class="notification-body">
+            <mat-icon class="notification-icon" [class.icon-unread]="!notification.isRead">
+              {{ iconFor(notification.type) }}
+            </mat-icon>
+            <div class="notification-content">
+              <p class="notification-message">{{ notification.message }}</p>
+              <span class="notification-time">{{ notification.createdAt | date: 'medium' }}</span>
+              @if (notification.data?.['orderId']) {
+                <a
+                  class="notification-link"
+                  routerLink="/orders"
+                  (click)="$event.stopPropagation()"
+                >
+                  View order
+                </a>
+              }
+            </div>
+            @if (!notification.isRead) {
+              <span class="unread-dot" aria-label="Unread"></span>
+            }
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
+</section>

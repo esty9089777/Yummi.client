@@ -8,6 +8,7 @@ import {
   ICreateCategoryDto,
   IUpdateCategoryDto,
 } from '../core/models/category.model';
+import { IProduct, IProductsResponse } from '../core/models/product.model';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
@@ -23,6 +24,14 @@ export class CategoryService {
     const res = await this.api.http.get<ApiResponse<ICategoryResponse>>(`/categories/${id}`);
     const { category } = this.api.unwrap(res);
     return category;
+  }
+
+  async listProducts(categoryId: string): Promise<IProduct[]> {
+    const res = await this.api.http.get<ApiResponse<IProductsResponse>>(
+      `/categories/${categoryId}/products`,
+    );
+    const { products } = this.api.unwrap(res);
+    return products ?? [];
   }
 
   async create(dto: ICreateCategoryDto): Promise<ICategory> {

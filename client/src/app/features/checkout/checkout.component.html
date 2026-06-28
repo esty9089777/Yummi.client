@@ -1,0 +1,193 @@
+<section class="checkout-page">
+  <header class="page-header">
+    <h1>
+      <mat-icon>point_of_sale</mat-icon>
+      Checkout
+    </h1>
+    <a mat-button routerLink="/cart" class="back-link">
+      <mat-icon>arrow_back</mat-icon> Back to cart
+    </a>
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (isEmpty()) {
+    <div class="empty-state">
+      <mat-icon>remove_shopping_cart</mat-icon>
+      <p>Your cart is empty, so there's nothing to check out.</p>
+      <a mat-flat-button color="primary" routerLink="/menu">Browse the menu</a>
+    </div>
+  } @else {
+    @if (!isOpen()) {
+      <div class="closed-banner" role="alert">
+        <mat-icon>schedule</mat-icon>
+        <div>
+          <strong>The restaurant is currently closed.</strong>
+          @if (closedReason(); as reason) {
+            <span>{{ reason }}</span>
+          }
+        </div>
+      </div>
+    }
+
+    @if (errorMessage(); as error) {
+      <p class="error-message" role="alert">{{ error }}</p>
+    }
+
+    <div class="checkout-layout">
+      <div class="checkout-form">
+        <mat-card class="form-card">
+          <h2>Order type</h2>
+          <mat-button-toggle-group
+            [value]="orderType()"
+            (change)="setOrderType($event.value)"
+            aria-label="Order type"
+          >
+            <mat-button-toggle [value]="OrderType.PICKUP">
+              <mat-icon>store</mat-icon> Pickup
+            </mat-button-toggle>
+            <mat-button-toggle [value]="OrderType.DELIVERY">
+              <mat-icon>delivery_dining</mat-icon> Delivery
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+
+          @if (isDelivery()) {
+            <div class="delivery-fields">
+              @if (hasSavedAddress()) {
+                <h3 class="delivery-section-title">Delivery address</h3>
+                <mat-button-toggle-group
+                  [value]="useSavedAddress()"
+                  (change)="setUseSavedAddress($event.value)"
+                  aria-label="Address source"
+                  class="address-toggle"
+                >
+                  <mat-button-toggle [value]="true">Saved address</mat-button-toggle>
+                  <mat-button-toggle [value]="false">Different address</mat-button-toggle>
+                </mat-button-toggle-group>
+
+                @if (usingSavedAddress()) {
+                  @if (savedAddress(); as address) {
+                    <div class="saved-address-preview">
+                      <mat-icon>home</mat-icon>
+                      <div>
+                        <strong>{{ address.street }} {{ address.houseNumber }}</strong>
+                        <span>{{ address.city }}</span>
+                      </div>
+                    </div>
+                    @if (!selectedZone()) {
+                      <p class="address-warning" role="alert">
+                        Your saved city is not available for delivery right now. Choose a
+                        different address or update your profile.
+                      </p>
+                    }
+                  }
+                }
+              }
+
+              @if (!hasSavedAddress() || !useSavedAddress()) {
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Delivery city</mat-label>
+                  <mat-select
+                    [value]="selectedCity()"
+                    (selectionChange)="selectedCity.set($event.value)"
+                  >
+                    @for (zone of zones(); track zone.id) {
+                      <mat-option [value]="zone.city">
+                        {{ zone.city }} — {{ formatPrice(zone.deliveryPrice) }},
+                        ~{{ zone.estimatedDeliveryMinutes }} min
+                      </mat-option>
+                    }
+                  </mat-select>
+                  @if (zones().length === 0) {
+                    <mat-hint>No delivery cities are currently available.</mat-hint>
+                  }
+                </mat-form-field>
+
+                <div class="address-fields">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Street</mat-label>
+                    <input
+                      matInput
+                      [value]="deliveryStreet()"
+                      (input)="deliveryStreet.set($any($event.target).value)"
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>House number</mat-label>
+                    <input
+                      matInput
+                      [value]="deliveryHouseNumber()"
+                      (input)="deliveryHouseNumber.set($any($event.target).value)"
+                    />
+                  </mat-form-field>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="pickup-note">
+              <mat-icon>info</mat-icon>
+              You'll pick this order up at the restaurant. No delivery fee.
+            </p>
+          }
+        </mat-card>
+      </div>
+
+      <mat-card class="checkout-summary">
+        <h2>Summary</h2>
+        <mat-divider />
+
+        <ul class="summary-items">
+          @for (item of items(); track item._id) {
+            <li>
+              <span class="summary-item-name">{{ item.quantity }}× {{ item.productId.name }}</span>
+            </li>
+          }
+        </ul>
+
+        <mat-divider />
+
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>{{ formatPrice(subtotal()) }}</span>
+        </div>
+        @if (isDelivery()) {
+          <div class="summary-row">
+            <span>Delivery fee</span>
+            <span>{{ formatPrice(deliveryFee()) }}</span>
+          </div>
+          @if (selectedZone(); as zone) {
+            <p class="eta-note">
+              <mat-icon>schedule</mat-icon>
+              Estimated delivery ~{{ zone.estimatedDeliveryMinutes }} min
+            </p>
+          }
+        }
+        <mat-divider />
+        <div class="summary-row summary-total">
+          <span>Total</span>
+          <span>{{ formatPrice(total()) }}</span>
+        </div>
+
+        <button
+          mat-flat-button
+          color="primary"
+          class="place-order-btn"
+          [disabled]="!canPlaceOrder()"
+          (click)="placeOrder()"
+        >
+          @if (isPlacing()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            <ng-container>
+              <mat-icon>check_circle</mat-icon>
+              Place order
+            </ng-container>
+          }
+        </button>
+      </mat-card>
+    </div>
+  }
+</section>

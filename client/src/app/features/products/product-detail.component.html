@@ -47,7 +47,79 @@
               {{ item.freeExtrasCount > 0 ? item.freeExtrasCount + ' extra(s) included' : 'No free extras' }}
               &mdash; {{ formatExtraPrice(item.pricePerExtra) }}
             </p>
+
+            @if (canOrder() && extraOptions().length > 0) {
+              <div class="extras-options">
+                @for (extra of extraOptions(); track extra.id) {
+                  <mat-checkbox
+                    [checked]="isExtraSelected(extra.id)"
+                    [disabled]="!extra.available"
+                    (change)="toggleExtra(extra.id, $event.checked)"
+                  >
+                    {{ extra.name }}
+                    @if (!extra.available) {
+                      <span class="extra-unavailable">(unavailable)</span>
+                    }
+                  </mat-checkbox>
+                }
+              </div>
+            }
           </div>
+        }
+
+        @if (!isOpen()) {
+          <div class="closed-banner" role="alert">
+            <mat-icon>schedule</mat-icon>
+            <div>
+              <strong>The restaurant is currently closed.</strong>
+              @if (closedReason(); as reason) {
+                <span>{{ reason }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        @if (canOrder()) {
+          <mat-divider />
+
+          <div class="order-section">
+            <div class="quantity-control">
+              <span class="quantity-label">Quantity</span>
+              <button mat-icon-button aria-label="Decrease quantity" (click)="changeQuantity(-1)">
+                <mat-icon>remove</mat-icon>
+              </button>
+              <span class="quantity-value">{{ quantity() }}</span>
+              <button mat-icon-button aria-label="Increase quantity" (click)="changeQuantity(1)">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+
+            <button
+              mat-flat-button
+              color="primary"
+              class="add-to-cart-btn"
+              [disabled]="isAddingToCart()"
+              (click)="addToCart()"
+            >
+              <mat-icon>add_shopping_cart</mat-icon>
+              Add to cart
+            </button>
+          </div>
+
+          @if (addedToCart()) {
+            <p class="add-success" role="status">
+              <mat-icon>check_circle</mat-icon>
+              Added to cart.
+              <a routerLink="/cart">View cart</a>
+            </p>
+          }
+          @if (addToCartError(); as error) {
+            <p class="add-error" role="alert">{{ error }}</p>
+          }
+        } @else if (!item.isAvailable) {
+          <p class="order-disabled">This item is currently unavailable.</p>
+        } @else if (!isOpen()) {
+          <p class="order-disabled">Ordering is not available while the restaurant is closed.</p>
         }
       </div>
     </div>

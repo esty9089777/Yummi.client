@@ -17,10 +17,12 @@ import {
   IUser,
 } from '../core/models/user.model';
 import { UserRole } from '../core/models/enums';
+import { SocketService } from '../core/services/socket.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiService);
+  private readonly socketService = inject(SocketService);
 
   private readonly _currentUser = signal<IUser | null>(null);
   private readonly _activeRole = signal<UserRole | null>(null);
@@ -115,9 +117,10 @@ export class AuthService {
   }
 
   /**
-   * Clears the JWT and resets all auth signals.
+   * Clears the JWT, disconnects the socket, and resets all auth signals.
    */
   logout(): void {
+    this.socketService.disconnect();
     removeBrowserStorageItem(TOKEN_KEY);
     this._currentUser.set(null);
     this._activeRole.set(null);
@@ -148,6 +151,7 @@ export class AuthService {
   private _applySession(token: string, user: IUser): void {
     if (token) {
       setBrowserStorageItem(TOKEN_KEY, token);
+      this.socketService.connect(token);
     }
     this._currentUser.set(user);
     this._activeRole.set(this._decodeActiveRole(token));

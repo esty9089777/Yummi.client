@@ -68,6 +68,14 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'categories/:id',
+    loadComponent: () =>
+      import('./features/products/product-list.component').then(
+        (m) => m.ProductListComponent,
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: 'products',
     redirectTo: 'menu',
     pathMatch: 'full',
@@ -81,9 +89,29 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'cart',
+    loadComponent: () =>
+      import('./features/cart/cart.component').then((m) => m.CartComponent),
+    canActivate: [authGuard, roleGuard(UserRole.CUSTOMER)],
+  },
+  {
+    path: 'checkout',
+    loadComponent: () =>
+      import('./features/checkout/checkout.component').then((m) => m.CheckoutComponent),
+    canActivate: [authGuard, roleGuard(UserRole.CUSTOMER)],
+  },
+  {
     path: 'orders',
     loadComponent: () =>
       import('./features/orders/orders.component').then((m) => m.OrdersComponent),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'notifications',
+    loadComponent: () =>
+      import('./features/notifications/notifications.component').then(
+        (m) => m.NotificationsComponent,
+      ),
     canActivate: [authGuard],
   },
   {
@@ -91,6 +119,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/kitchen/kitchen.component').then((m) => m.KitchenComponent),
     canActivate: [authGuard, roleGuard(UserRole.KITCHEN, UserRole.ADMIN)],
+  },
+  {
+    path: 'delivery',
+    loadComponent: () =>
+      import('./features/delivery/delivery.component').then((m) => m.DeliveryComponent),
+    canActivate: [authGuard, roleGuard(UserRole.DELIVERY, UserRole.ADMIN)],
   },
   {
     path: 'delivery-zones',
