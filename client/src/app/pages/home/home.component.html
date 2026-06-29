@@ -24,6 +24,9 @@
       <a mat-stroked-button routerLink="/orders">
         <mat-icon>receipt_long</mat-icon> My Orders
       </a>
+      <a mat-stroked-button routerLink="/reviews">
+        <mat-icon>rate_review</mat-icon> Reviews
+      </a>
       <a mat-stroked-button routerLink="/notifications">
         <mat-icon>notifications</mat-icon> Notifications
       </a>
@@ -31,7 +34,10 @@
 
     @if (activeRole() === UserRole.KITCHEN) {
       <a mat-flat-button color="primary" routerLink="/kitchen">
-        <mat-icon>soup_kitchen</mat-icon> Kitchen Dashboard
+        <mat-icon>soup_kitchen</mat-icon> Kitchen &amp; Ingredients
+      </a>
+      <a mat-stroked-button routerLink="/reviews">
+        <mat-icon>rate_review</mat-icon> Reviews
       </a>
     }
 
@@ -42,8 +48,11 @@
     }
 
     @if (activeRole() === UserRole.ADMIN) {
-      <a mat-flat-button color="primary" routerLink="/admin">
-        <mat-icon>admin_panel_settings</mat-icon> Admin Panel
+      <a mat-flat-button color="primary" routerLink="/admin/dashboard">
+        <mat-icon>insights</mat-icon> Statistics Dashboard
+      </a>
+      <a mat-stroked-button routerLink="/admin">
+        <mat-icon>admin_panel_settings</mat-icon> Administration
       </a>
       <a mat-stroked-button routerLink="/kitchen">
         <mat-icon>soup_kitchen</mat-icon> Kitchen

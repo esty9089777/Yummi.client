@@ -3,7 +3,7 @@ export interface INotification {
   recipient: string;
   type: string;
   message: string;
-  data?: { orderId?: string; [key: string]: unknown };
+  data?: { orderId?: string; ingredientId?: string; ingredientName?: string; [key: string]: unknown };
   isRead: boolean;
   createdAt: string;
   updatedAt: string;

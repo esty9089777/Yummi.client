@@ -3,6 +3,11 @@ import { ApiService } from './api.service';
 import { SocketService, SocketEvents } from '../core/services/socket.service';
 import { INotification } from '../core/models/notification.model';
 import type { ApiResponse } from '../core/models/api-response.model';
+import {
+  getNotificationIngredientId,
+  isKitchenIssueNotification,
+  normalizeNotification,
+} from '../core/utils/notification.util';
 
 interface INotificationsResponse {
   notifications: INotification[];
@@ -51,7 +56,11 @@ export class NotificationService implements OnDestroy {
         '/notifications'
       );
       const { notifications } = this.api.unwrap(res);
-      this._notifications.set(notifications ?? []);
+      this._notifications.set(
+        (notifications ?? [])
+          .map((item) => normalizeNotification(item))
+          .filter((item): item is INotification => item !== null),
+      );
     } catch {
       // Silently fail — unreadCount stays 0, no crash
     } finally {
@@ -61,6 +70,13 @@ export class NotificationService implements OnDestroy {
 
   /** Marks a single notification as read (optimistic + server persist). */
   async markAsRead(id: string): Promise<void> {
+    if (id.startsWith('local-')) {
+      this._notifications.update((list) =>
+        list.map((n) => (n._id === id ? { ...n, isRead: true } : n)),
+      );
+      return;
+    }
+
     this._notifications.update((list) =>
       list.map((n) => (n._id === id ? { ...n, isRead: true } : n))
     );
@@ -87,33 +103,30 @@ export class NotificationService implements OnDestroy {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Private helpers
-  // ---------------------------------------------------------------------------
-
-  private _handleIncomingNotification(
-    payload: INotification | { message: string; type: string; orderId?: string }
-  ): void {
-    if (this._isFullNotification(payload)) {
-      this._notifications.update((list) => [payload, ...list]);
-    } else {
-      const synthetic: INotification = {
-        _id: `local-${Date.now()}`,
-        recipient: '',
-        type: payload.type,
-        message: payload.message,
-        data: payload.orderId ? { orderId: payload.orderId } : undefined,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      this._notifications.update((list) => [synthetic, ...list]);
-    }
+  /** Removes kitchen-issue notifications after inventory is replenished. */
+  removeKitchenIssueNotifications(ingredientId: string, notificationId?: string): void {
+    this._notifications.update((list) =>
+      list.filter((notification) => {
+        if (notificationId && notification._id === notificationId) {
+          return false;
+        }
+        if (
+          getNotificationIngredientId(notification) === ingredientId &&
+          isKitchenIssueNotification(notification)
+        ) {
+          return false;
+        }
+        return true;
+      }),
+    );
   }
 
-  private _isFullNotification(
-    payload: INotification | { message: string; type: string; orderId?: string }
-  ): payload is INotification {
-    return '_id' in payload && 'recipient' in payload;
+  private _handleIncomingNotification(payload: unknown): void {
+    const notification = normalizeNotification(payload);
+    if (!notification) {
+      return;
+    }
+
+    this._notifications.update((list) => [notification, ...list]);
   }
 }

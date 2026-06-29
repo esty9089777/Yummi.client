@@ -2,7 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
+  signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -12,7 +14,15 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { NotificationService } from '../../services/notification.service';
+import { IngredientService } from '../../services/ingredient.service';
+import { AuthService } from '../../services/auth.service';
 import { INotification } from '../../core/models/notification.model';
+import { UserRole } from '../../core/models/enums';
+import {
+  getNotificationIngredientId,
+  isKitchenIssueNotification,
+} from '../../core/utils/notification.util';
+import { getApiErrorMessage } from '../../core/utils/api-error.util';
 
 @Component({
   selector: 'app-notifications',
@@ -31,12 +41,19 @@ import { INotification } from '../../core/models/notification.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationsComponent implements OnInit {
-  readonly notificationService = inject(NotificationService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly ingredientService = inject(IngredientService);
+  private readonly auth = inject(AuthService);
 
   readonly notifications = this.notificationService.notifications;
   readonly isLoading = this.notificationService.isLoading;
+  readonly replenishingId = signal<string | null>(null);
+  readonly actionError = signal<string | null>(null);
+
+  readonly isAdmin = computed(() => this.auth.activeRole() === UserRole.ADMIN);
 
   async ngOnInit(): Promise<void> {
+    await this.auth.ensureSessionInitialized();
     await this.notificationService.load();
   }
 
@@ -48,6 +65,41 @@ export class NotificationsComponent implements OnInit {
 
   async markAllRead(): Promise<void> {
     await this.notificationService.markAllAsRead();
+  }
+
+  isKitchenIssue(notification: INotification): boolean {
+    return isKitchenIssueNotification(notification);
+  }
+
+  canReplenish(notification: INotification): boolean {
+    return (
+      this.isAdmin() &&
+      this.isKitchenIssue(notification) &&
+      !!getNotificationIngredientId(notification)
+    );
+  }
+
+  async replenishInventory(notification: INotification, event: Event): Promise<void> {
+    event.stopPropagation();
+
+    const ingredientId = getNotificationIngredientId(notification);
+    if (!ingredientId) {
+      return;
+    }
+
+    this.replenishingId.set(notification._id);
+    this.actionError.set(null);
+
+    try {
+      await this.ingredientService.replenish(ingredientId, {
+        notificationId: notification._id.startsWith('local-') ? undefined : notification._id,
+      });
+      this.notificationService.removeKitchenIssueNotifications(ingredientId, notification._id);
+    } catch (error) {
+      this.actionError.set(getApiErrorMessage(error, 'Failed to replenish inventory.'));
+    } finally {
+      this.replenishingId.set(null);
+    }
   }
 
   iconFor(type: string): string {

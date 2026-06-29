@@ -1,0 +1,87 @@
+<section class="dashboard-page">
+  <header class="dashboard-header">
+    <div>
+      <h1>Statistics Dashboard</h1>
+      <p>Admin KPIs: orders, revenue, top products, ratings, and cancellations.</p>
+    </div>
+    <a mat-button routerLink="/admin">Back to Admin</a>
+  </header>
+
+  @if (errorMessage(); as error) {
+    <p class="error-message" role="alert">{{ error }}</p>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (stats(); as data) {
+    <div class="kpi-grid">
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <mat-icon class="kpi-icon kpi-icon--orders">receipt_long</mat-icon>
+          <p class="kpi-label">Total orders</p>
+          <p class="kpi-value">{{ data.totalOrders }}</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <mat-icon class="kpi-icon kpi-icon--revenue">payments</mat-icon>
+          <p class="kpi-label">Monthly revenue</p>
+          <p class="kpi-value">{{ formatCurrency(data.monthlyRevenue) }}</p>
+          <p class="kpi-hint">Completed orders this month</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <mat-icon class="kpi-icon kpi-icon--rating">star</mat-icon>
+          <p class="kpi-label">Average rating</p>
+          <p class="kpi-value">{{ formatRating(data.averageRating) }}</p>
+          <p class="kpi-stars">{{ starsDisplay(data.averageRating) }}</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <mat-icon class="kpi-icon kpi-icon--cancellations">cancel</mat-icon>
+          <p class="kpi-label">Total cancellations</p>
+          <p class="kpi-value">{{ data.totalCancellations }}</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <mat-card class="products-card">
+      <mat-card-header>
+        <mat-card-title>Most sold products</mat-card-title>
+        <mat-card-subtitle>Top 5 by quantity (non-cancelled orders)</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (data.mostSoldProducts.length === 0) {
+          <p class="empty-state">No product sales data yet.</p>
+        } @else {
+          <table mat-table [dataSource]="data.mostSoldProducts" class="products-table">
+            <ng-container matColumnDef="rank">
+              <th mat-header-cell *matHeaderCellDef>#</th>
+              <td mat-cell *matCellDef="let row; let i = index">{{ i + 1 }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Product</th>
+              <td mat-cell *matCellDef="let product">{{ product.name }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="totalQuantity">
+              <th mat-header-cell *matHeaderCellDef>Units sold</th>
+              <td mat-cell *matCellDef="let product">{{ product.totalQuantity }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="productColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: productColumns"></tr>
+          </table>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</section>

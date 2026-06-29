@@ -46,12 +46,26 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
   },
   {
-    path: 'admin/delivery-zones',
+    path: 'admin/products',
     loadComponent: () =>
-      import('./features/admin/delivery-zones/delivery-zone-management.component').then(
-        (m) => m.DeliveryZoneManagementComponent,
+      import('./features/admin/products/product-management.component').then(
+        (m) => m.ProductManagementComponent,
       ),
     canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
+  },
+  {
+    path: 'admin/ingredients',
+    loadComponent: () =>
+      import('./features/admin/ingredients/ingredient-management.component').then(
+        (m) => m.IngredientManagementComponent,
+      ),
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
+  },
+  {
+    path: 'reviews',
+    loadComponent: () =>
+      import('./features/reviews/reviews.component').then((m) => m.ReviewsComponent),
+    canActivate: [authGuard, roleGuard(UserRole.CUSTOMER, UserRole.KITCHEN, UserRole.ADMIN)],
   },
   {
     path: 'business-hours',
@@ -132,7 +146,19 @@ export const routes: Routes = [
       import('./features/delivery-zones/delivery-zones.component').then(
         (m) => m.DeliveryZonesComponent,
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
+  },
+  {
+    path: 'admin/dashboard',
+    loadComponent: () =>
+      import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
+  },
+  {
+    path: 'admin/operations',
+    loadComponent: () =>
+      import('./features/admin/operations/operations.component').then((m) => m.OperationsComponent),
+    canActivate: [authGuard, roleGuard(UserRole.ADMIN)],
   },
   {
     path: 'admin',

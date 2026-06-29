@@ -1,13 +1,17 @@
 <section class="dz-page">
-  <div class="page-header">
-    <h1 class="page-title">Delivery Zones</h1>
-    @if (isAdmin()) {
-      <button mat-flat-button (click)="toggleCreateForm()">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Delivery Zones</h1>
+      <p class="page-subtitle">Manage cities available for delivery, pricing, and estimated times.</p>
+    </div>
+    <div class="page-header-actions">
+      <button mat-flat-button color="primary" (click)="toggleCreateForm()">
         <mat-icon>{{ showCreateForm() ? 'close' : 'add' }}</mat-icon>
-        {{ showCreateForm() ? 'Cancel' : 'Add Zone' }}
+        {{ showCreateForm() ? 'Cancel' : 'Add zone' }}
       </button>
-    }
-  </div>
+      <a mat-button routerLink="/admin">Back to Admin</a>
+    </div>
+  </header>
 
   @if (errorMessage(); as error) {
     <p class="page-error" role="alert">{{ error }}</p>
@@ -17,7 +21,7 @@
   }
 
   <!-- Create form -->
-  @if (showCreateForm() && isAdmin()) {
+  @if (showCreateForm()) {
     <mat-card class="form-card">
       <mat-card-header>
         <mat-card-title>New Delivery Zone</mat-card-title>
@@ -196,8 +200,8 @@
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns();" [class.editing-row]="editingZone()?.id === row.id"></tr>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.editing-row]="editingZone()?.id === row.id"></tr>
       </table>
     </mat-card>
   }

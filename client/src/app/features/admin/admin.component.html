@@ -1,23 +1,32 @@
-<section class="admin-feature">
+<section class="admin-page">
   <header class="admin-header">
-    <h1>Admin</h1>
+    <div>
+      <h1>Administration</h1>
+      <p>Manage catalog, staff, configuration, and restaurant performance.</p>
+    </div>
     <a mat-button routerLink="/">Back to Home</a>
   </header>
 
-  <p>Admin dashboard — additional modules will be added here.</p>
-
-  @if (isAdmin()) {
-    <div class="admin-links">
-      <a mat-flat-button color="primary" routerLink="/admin/employees">
-        Manage employees
-      </a>
-      <a mat-flat-button color="primary" routerLink="/admin/categories">
-        Manage categories
-      </a>
-      <a mat-flat-button color="primary" routerLink="/admin/ingredients">
-        Manage ingredients
-      </a>
-      <a mat-stroked-button routerLink="/profile">My profile</a>
-    </div>
-  }
+  <div class="admin-sections">
+    @for (section of sections; track section.title) {
+      <mat-card class="admin-section">
+        <mat-card-header>
+          <mat-card-title>{{ section.title }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="admin-links">
+            @for (link of section.links; track link.route) {
+              <a [routerLink]="link.route" class="admin-link">
+                <mat-icon>{{ link.icon }}</mat-icon>
+                <span class="admin-link-text">
+                  <strong>{{ link.label }}</strong>
+                  <small>{{ link.description }}</small>
+                </span>
+              </a>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
 </section>

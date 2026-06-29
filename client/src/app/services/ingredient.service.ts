@@ -8,6 +8,7 @@ import {
   IIngredientResponse,
   IIngredientsResponse,
   IReportShortageDto,
+  IReplenishIngredientDto,
   IUpdateIngredientDto,
 } from '../core/models/ingredient.model';
 
@@ -54,6 +55,15 @@ export class IngredientService {
   async reportShortage(id: string, dto: IReportShortageDto = {}): Promise<IIngredient> {
     const res = await this.api.http.post<ApiResponse<IIngredientResponse>>(
       `/ingredients/${id}/report-shortage`,
+      dto,
+    );
+    const { ingredient } = this.api.unwrap(res);
+    return ingredient;
+  }
+
+  async replenish(id: string, dto: IReplenishIngredientDto = {}): Promise<IIngredient> {
+    const res = await this.api.http.post<ApiResponse<IIngredientResponse>>(
+      `/ingredients/${id}/replenish`,
       dto,
     );
     const { ingredient } = this.api.unwrap(res);
