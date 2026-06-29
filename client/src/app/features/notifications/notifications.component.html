@@ -12,6 +12,10 @@
     }
   </header>
 
+  @if (actionError(); as error) {
+    <p class="page-error" role="alert">{{ error }}</p>
+  }
+
   @if (isLoading()) {
     <div class="loading-state">
       <mat-spinner diameter="40" />
@@ -44,6 +48,24 @@
                 >
                   View order
                 </a>
+              }
+              @if (canReplenish(notification)) {
+                <button
+                  mat-stroked-button
+                  color="primary"
+                  type="button"
+                  class="replenish-btn"
+                  [disabled]="replenishingId() === notification._id"
+                  (click)="replenishInventory(notification, $event)"
+                >
+                  @if (replenishingId() === notification._id) {
+                    Replenishing...
+                  } @else {
+                    Replenish inventory
+                  }
+                </button>
+              } @else if (isAdmin() && isKitchenIssue(notification)) {
+                <span class="notification-hint">Ingredient details unavailable for this alert.</span>
               }
             </div>
             @if (!notification.isRead) {

@@ -34,6 +34,10 @@ export interface IReportShortageDto {
   message?: string;
 }
 
+export interface IReplenishIngredientDto {
+  notificationId?: string;
+}
+
 export interface IIngredientResponse {
   ingredient: IIngredient | IIngredientWithUsage;
 }

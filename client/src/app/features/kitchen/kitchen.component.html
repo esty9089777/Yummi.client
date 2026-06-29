@@ -2,13 +2,7 @@
   <header class="kitchen-header">
     <div>
       <h1>Kitchen Dashboard</h1>
-      <p>
-        @if (isKitchenWorker()) {
-          View and download active kitchen orders.
-        } @else {
-          Manage ingredient stock and advance orders through the kitchen pipeline.
-        }
-      </p>
+      <p>Manage ingredient stock and advance orders through the kitchen pipeline.</p>
     </div>
     <a mat-button routerLink="/">Back to Home</a>
   </header>
@@ -183,7 +177,6 @@
       }
     </mat-tab>
 
-    @if (!isKitchenWorker()) {
     <!-- ───────────────── INGREDIENTS TAB ───────────────── -->
     <mat-tab label="Ingredients">
       @if (isLoadingIngredients()) {
@@ -250,7 +243,6 @@
         </div>
       }
     </mat-tab>
-    }
 
   </mat-tab-group>
 </section>

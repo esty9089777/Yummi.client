@@ -1,9 +1,23 @@
 export interface IReview {
-  _id: string;
-  order: string;
-  customer: string;
+  id: string;
+  orderId: string;
+  customerId: string;
   rating: number;
   comment?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ICreateReviewDto {
+  orderId: string;
+  rating: number;
+  comment?: string;
+}
+
+export interface IReviewsResponse {
+  reviews: IReview[];
+}
+
+export interface IReviewResponse {
+  review: IReview;
 }
