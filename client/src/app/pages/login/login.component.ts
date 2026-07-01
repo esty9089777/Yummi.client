@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../services/auth.service';
 import { getApiErrorMessage } from '../../core/utils/api-error.util';
 
@@ -25,6 +26,7 @@ import { getApiErrorMessage } from '../../core/utils/api-error.util';
     MatInputModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    MatIconModule,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -37,11 +39,16 @@ export class LoginComponent {
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly hidePassword = signal(true);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
   });
+
+  togglePasswordVisibility(): void {
+    this.hidePassword.update((hidden) => !hidden);
+  }
 
   async onSubmit(): Promise<void> {
     if (this.form.invalid) {

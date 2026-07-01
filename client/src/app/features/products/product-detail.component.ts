@@ -193,7 +193,6 @@ export class ProductDetailComponent implements OnInit {
 
       this.extraOptions.set(options);
     } catch {
-      // Extras are optional; fall back to no add-on selection on failure.
       this.extraOptions.set([]);
     }
   }

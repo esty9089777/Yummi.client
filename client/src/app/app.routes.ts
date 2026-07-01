@@ -121,6 +121,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'reviews',
+    loadComponent: () =>
+      import('./features/reviews/reviews.component').then((m) => m.ReviewsComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: 'notifications',
     loadComponent: () =>
       import('./features/notifications/notifications.component').then(
