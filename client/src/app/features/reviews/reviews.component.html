@@ -2,110 +2,129 @@
   <header class="reviews-header">
     <div>
       <h1>Reviews</h1>
-      <p>See what customers say about their orders. Submit your own after a completed order.</p>
+      @if (isCustomer()) {
+        <p>Share feedback on completed orders and browse what others wrote.</p>
+      } @else if (isAdmin()) {
+        <p>Monitor customer feedback and remove inappropriate reviews.</p>
+      } @else {
+        <p>See what customers are saying about their orders.</p>
+      }
     </div>
-    @if (reviews().length > 0) {
-      <div class="summary-badge">
-        <mat-icon>star</mat-icon>
-        <span>{{ averageRating() }} / 5</span>
-        <small>({{ reviews().length }} reviews)</small>
-      </div>
+    @if (isAdmin()) {
+      <a mat-button routerLink="/admin">Back to Admin</a>
+    } @else {
+      <a mat-button routerLink="/">Back to Home</a>
     }
   </header>
 
   @if (successMessage(); as message) {
-    <p class="success-message">{{ message }}</p>
+    <p class="success-message" role="status">{{ message }}</p>
   }
   @if (errorMessage(); as error) {
     <p class="error-message" role="alert">{{ error }}</p>
   }
 
-  @if (isLoading()) {
-    <div class="loading-state">
-      <mat-spinner diameter="40" />
-    </div>
-  } @else {
-    @if (isCustomer() && reviewableOrders().length > 0) {
-      <mat-card class="write-review-card">
-        <mat-card-header>
-          <mat-card-title>Write a review</mat-card-title>
-          <mat-card-subtitle>One review per completed order</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
+  @if (isCustomer()) {
+    <mat-card class="submit-card">
+      <mat-card-header>
+        <mat-card-title>Write a review</mat-card-title>
+        <mat-card-subtitle>One review per completed order</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (canSubmit()) {
           <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="review-form">
             <mat-form-field appearance="outline">
-              <mat-label>Completed order</mat-label>
+              <mat-label>Order</mat-label>
               <mat-select formControlName="orderId">
                 @for (order of reviewableOrders(); track order._id) {
                   <mat-option [value]="order._id">
-                    Order #{{ shortOrderId(order._id) }} — {{ order.createdAt | date: 'mediumDate' }}
+                    Order #{{ shortId(order._id) }} — {{ order.createdAt | date: 'mediumDate' }}
                   </mat-option>
                 }
               </mat-select>
             </mat-form-field>
 
-            <div class="rating-picker">
+            <div class="rating-field">
               <span class="rating-label">Rating</span>
-              <div class="stars">
-                @for (star of [1, 2, 3, 4, 5]; track star) {
-                  <button
-                    type="button"
-                    mat-icon-button
-                    [attr.aria-label]="star + ' stars'"
-                    (click)="setRating(star)"
-                  >
-                    <mat-icon>{{ star <= selectedRating() ? 'star' : 'star_border' }}</mat-icon>
-                  </button>
-                }
-              </div>
+              <app-star-rating formControlName="rating" />
+              <span class="rating-value">{{ reviewForm.controls.rating.value }} / 5</span>
             </div>
 
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="outline" class="full-width">
               <mat-label>Comment (optional)</mat-label>
-              <textarea matInput rows="4" formControlName="comment"></textarea>
+              <textarea matInput rows="3" formControlName="comment"></textarea>
             </mat-form-field>
 
             <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()">
               @if (isSubmitting()) {
-                <mat-spinner diameter="20" />
+                Submitting...
               } @else {
                 Submit review
               }
             </button>
           </form>
-        </mat-card-content>
-      </mat-card>
-    }
-
-    @if (reviews().length === 0) {
-      <mat-card>
-        <mat-card-content>
-          <p class="empty-state">No reviews yet.</p>
-        </mat-card-content>
-      </mat-card>
-    } @else {
-      <div class="reviews-list">
-        @for (review of reviews(); track review.id) {
-          <mat-card class="review-card">
-            <mat-card-header>
-              <mat-card-title>Order #{{ shortOrderId(review.orderId) }}</mat-card-title>
-              <mat-card-subtitle>
-                {{ review.customerName }} · {{ review.createdAt | date: 'mediumDate' }}
-              </mat-card-subtitle>
-            </mat-card-header>
-            <mat-card-content>
-              <div class="review-stars" [attr.aria-label]="review.rating + ' out of 5 stars'">
-                @for (filled of starsArray(review.rating); track $index) {
-                  <mat-icon>{{ filled ? 'star' : 'star_border' }}</mat-icon>
-                }
-              </div>
-              @if (review.comment) {
-                <p class="review-comment">{{ review.comment }}</p>
-              }
-            </mat-card-content>
-          </mat-card>
+        } @else {
+          <p class="empty-hint">Complete an order to leave your first review.</p>
         }
-      </div>
-    }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (reviews().length === 0) {
+    <p class="empty-state">No reviews yet.</p>
+  } @else {
+    <mat-card>
+      <mat-card-content>
+        <table mat-table [dataSource]="reviews()" class="reviews-table">
+          <ng-container matColumnDef="order">
+            <th mat-header-cell *matHeaderCellDef>Order</th>
+            <td mat-cell *matCellDef="let review">{{ orderLabel(review.orderId) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="rating">
+            <th mat-header-cell *matHeaderCellDef>Rating</th>
+            <td mat-cell *matCellDef="let review">
+              <app-star-rating [rating]="review.rating" [readonly]="true" [compact]="true" />
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="comment">
+            <th mat-header-cell *matHeaderCellDef>Comment</th>
+            <td mat-cell *matCellDef="let review">{{ review.comment || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>Date</th>
+            <td mat-cell *matCellDef="let review">{{ review.createdAt | date: 'medium' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let review">
+              <button
+                mat-stroked-button
+                color="warn"
+                type="button"
+                [disabled]="deletingId() === review.id"
+                (click)="deleteReview(review)"
+              >
+                @if (deletingId() === review.id) {
+                  Deleting...
+                } @else {
+                  Delete
+                }
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
   }
 </section>

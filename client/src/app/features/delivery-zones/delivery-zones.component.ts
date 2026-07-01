@@ -2,11 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
-  computed,
   inject,
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -16,9 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AuthService } from '../../services/auth.service';
 import { DeliveryZoneService } from '../../services/delivery-zone.service';
-import { UserRole } from '../../core/models/enums';
 import type { IDeliveryZone } from '../../core/models/delivery-zone.model';
 import { getApiErrorMessage } from '../../core/utils/api-error.util';
 
@@ -27,6 +25,7 @@ import { getApiErrorMessage } from '../../core/utils/api-error.util';
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -43,11 +42,9 @@ import { getApiErrorMessage } from '../../core/utils/api-error.util';
 })
 export class DeliveryZonesComponent implements OnInit {
   private readonly zoneService = inject(DeliveryZoneService);
-  private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
 
   readonly zones = signal<IDeliveryZone[]>([]);
-  readonly isAdmin = computed(() => this.auth.activeRole() === UserRole.ADMIN);
 
   readonly isLoading = signal(true);
   readonly isSubmitting = signal(false);
@@ -58,11 +55,7 @@ export class DeliveryZonesComponent implements OnInit {
   readonly showCreateForm = signal(false);
   readonly editingZone = signal<IDeliveryZone | null>(null);
 
-  readonly displayedColumns = computed(() =>
-    this.isAdmin()
-      ? ['city', 'deliveryPrice', 'eta', 'status', 'actions']
-      : ['city', 'deliveryPrice', 'eta', 'status'],
-  );
+  readonly displayedColumns = ['city', 'deliveryPrice', 'eta', 'status', 'actions'];
 
   readonly createForm = this.fb.nonNullable.group({
     city: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],

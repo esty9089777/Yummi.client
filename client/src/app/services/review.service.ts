@@ -12,21 +12,19 @@ import {
 export class ReviewService {
   private readonly api = inject(ApiService);
 
-  async create(dto: ICreateReviewDto): Promise<IReview> {
-    const res = await this.api.http.post<ApiResponse<IReviewResponse>>('/reviews', dto);
-    const { review } = this.api.unwrap(res);
-    return review;
-  }
-
   async getAll(): Promise<IReview[]> {
     const res = await this.api.http.get<ApiResponse<IReviewsResponse>>('/reviews');
     const { reviews } = this.api.unwrap(res);
     return reviews ?? [];
   }
 
-  async getById(id: string): Promise<IReview> {
-    const res = await this.api.http.get<ApiResponse<IReviewResponse>>(`/reviews/${id}`);
+  async create(dto: ICreateReviewDto): Promise<IReview> {
+    const res = await this.api.http.post<ApiResponse<IReviewResponse>>('/reviews', dto);
     const { review } = this.api.unwrap(res);
     return review;
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.api.http.delete(`/reviews/${id}`);
   }
 }

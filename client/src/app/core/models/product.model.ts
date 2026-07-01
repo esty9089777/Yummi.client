@@ -34,3 +34,27 @@ export interface IProductResponse {
 export interface IProductsResponse {
   products: IProduct[];
 }
+
+export interface ICreateProductDto {
+  name: string;
+  description?: string;
+  image?: string;
+  price: number;
+  categories: string[];
+  ingredients?: string[];
+  allowedExtras?: string[];
+  freeExtrasCount?: number;
+  pricePerExtra?: number;
+}
+
+export interface IUpdateProductDto {
+  name?: string;
+  description?: string;
+  image?: string;
+  price?: number;
+  categories?: string[];
+  ingredients?: string[];
+  allowedExtras?: string[];
+  freeExtrasCount?: number;
+  pricePerExtra?: number;
+}

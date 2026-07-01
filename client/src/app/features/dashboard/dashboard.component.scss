@@ -1,0 +1,97 @@
+.dashboard-page {
+  padding: 1rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.kpi-card mat-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.kpi-icon {
+  font-size: 1.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: 0.25rem;
+
+  &--orders {
+    color: #1565c0;
+  }
+
+  &--revenue {
+    color: #2e7d32;
+  }
+
+  &--rating {
+    color: #ffb300;
+  }
+
+  &--cancellations {
+    color: #c62828;
+  }
+}
+
+.kpi-label {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.kpi-value {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.kpi-hint,
+.kpi-stars {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.kpi-stars {
+  color: #ffb300;
+  letter-spacing: 0.05em;
+}
+
+.products-card {
+  margin-bottom: 1rem;
+}
+
+.products-table {
+  width: 100%;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.empty-state {
+  margin: 0;
+  color: #666;
+}
+
+.error-message {
+  color: #c62828;
+  margin-bottom: 0.75rem;
+}

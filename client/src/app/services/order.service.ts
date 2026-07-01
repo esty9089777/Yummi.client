@@ -84,6 +84,13 @@ export class OrderService {
     return orders ?? [];
   }
 
+  /** Returns all orders (manager / employee view). */
+  async getAllOrders(): Promise<IOrder[]> {
+    const res = await this.api.http.get<ApiResponse<IOrdersResponse>>('/orders');
+    const { orders } = this.api.unwrap(res);
+    return orders ?? [];
+  }
+
   async checkOrderIngredients(orderId: string): Promise<IOrderIngredientCheck> {
     const res = await this.api.http.get<ApiResponse<IOrderIngredientCheckResponse>>(
       `/orders/${orderId}/ingredient-check`,

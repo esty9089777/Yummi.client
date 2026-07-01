@@ -18,6 +18,18 @@
 
     <!-- ───────────────── ORDERS TAB ───────────────── -->
     <mat-tab label="Orders">
+      <div class="tab-toolbar">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="downloadOrders()"
+          [disabled]="orders().length === 0"
+        >
+          <mat-icon>download</mat-icon>
+          Download orders
+        </button>
+      </div>
+
       @if (isLoadingOrders()) {
         <div class="loading-state">
           <mat-spinner diameter="32" />

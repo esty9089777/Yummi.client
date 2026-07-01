@@ -42,10 +42,24 @@
         Orders
       </a>
 
+      @if (isRole(UserRole.CUSTOMER)) {
+        <a mat-button routerLink="/reviews" routerLinkActive="nav-active">
+          <mat-icon>rate_review</mat-icon>
+          Reviews
+        </a>
+      }
+
       @if (isRole(UserRole.KITCHEN, UserRole.ADMIN)) {
         <a mat-button routerLink="/kitchen" routerLinkActive="nav-active">
           <mat-icon>soup_kitchen</mat-icon>
           Kitchen
+        </a>
+      }
+
+      @if (isRole(UserRole.KITCHEN)) {
+        <a mat-button routerLink="/reviews" routerLinkActive="nav-active">
+          <mat-icon>rate_review</mat-icon>
+          Reviews
         </a>
       }
 
@@ -57,29 +71,14 @@
       }
 
       @if (isRole(UserRole.ADMIN)) {
-        <a mat-button routerLink="/admin/categories" routerLinkActive="nav-active">
-          <mat-icon>category</mat-icon>
-          Categories
-        </a>
-        <a mat-button routerLink="/admin/reviews" routerLinkActive="nav-active">
-          <mat-icon>rate_review</mat-icon>
-          Reviews
-        </a>
-        <a mat-button routerLink="/admin/ingredients" routerLinkActive="nav-active">
-          <mat-icon>egg</mat-icon>
-          Ingredients
-        </a>
-        <a mat-button routerLink="/admin/employees" routerLinkActive="nav-active">
-          <mat-icon>groups</mat-icon>
-          Employees
-        </a>
-        <a mat-button routerLink="/delivery-zones" routerLinkActive="nav-active">
-          <mat-icon>map</mat-icon>
-          Zones
-        </a>
-        <a mat-button routerLink="/business-hours" routerLinkActive="nav-active">
-          <mat-icon>schedule</mat-icon>
-          Hours
+        <a
+          mat-button
+          routerLink="/admin"
+          routerLinkActive="nav-active"
+          [routerLinkActiveOptions]="{ paths: 'subset' }"
+        >
+          <mat-icon>admin_panel_settings</mat-icon>
+          Admin
         </a>
       }
 

@@ -26,6 +26,7 @@ import { IIngredient } from '../../core/models/ingredient.model';
 import { IOrder } from '../../core/models/order.model';
 import { IngredientStatus, OrderStatus } from '../../core/models/enums';
 import { getApiErrorMessage } from '../../core/utils/api-error.util';
+import { exportOrdersCsv } from '../../core/utils/order-export.util';
 
 /**
  * Allowed forward transitions for the kitchen.
@@ -220,6 +221,10 @@ export class KitchenComponent implements OnDestroy {
 
   formatMissingNames(items: { name: string }[]): string {
     return items.map((item) => item.name).join(', ');
+  }
+
+  downloadOrders(): void {
+    exportOrdersCsv(this.orders(), `yummi-kitchen-orders-${Date.now()}.csv`);
   }
 
   async toggleIngredientStatus(ingredient: IIngredient): Promise<void> {
