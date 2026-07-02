@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -51,6 +51,7 @@ export class ReviewsComponent implements OnInit {
   private readonly reviewService = inject(ReviewService);
   private readonly orderService = inject(OrderService);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
 
   readonly UserRole = UserRole;
@@ -87,7 +88,12 @@ export class ReviewsComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    void this.load();
+    void this.load().then(() => this._applyOrderIdFromQuery());
+    this.route.queryParamMap.subscribe(() => {
+      if (!this.isLoading()) {
+        this._applyOrderIdFromQuery();
+      }
+    });
   }
 
   async load(): Promise<void> {
@@ -162,5 +168,21 @@ export class ReviewsComponent implements OnInit {
 
   orderLabel(orderId: string): string {
     return `#${this.shortId(orderId)}`;
+  }
+
+  private _applyOrderIdFromQuery(): void {
+    if (!this.isCustomer()) {
+      return;
+    }
+
+    const orderId = this.route.snapshot.queryParamMap.get('orderId');
+    if (!orderId) {
+      return;
+    }
+
+    const isReviewable = this.reviewableOrders().some((order) => order._id === orderId);
+    if (isReviewable) {
+      this.reviewForm.patchValue({ orderId });
+    }
   }
 }

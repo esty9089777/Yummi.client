@@ -89,6 +89,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
   readonly justPlacedId = signal<string | null>(null);
   readonly cancellingId = signal<string | null>(null);
 
+  private socketUnsubscribers: (() => void)[] = [];
+
   async ngOnInit(): Promise<void> {
     this.justPlacedId.set(this.route.snapshot.queryParamMap.get('placed'));
     await this.load();
@@ -96,10 +98,10 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    for (const event of ORDER_STATUS_EVENTS) {
-      this.socketService.off(event);
+    for (const unsubscribe of this.socketUnsubscribers) {
+      unsubscribe();
     }
-    this.socketService.off(SocketEvents.ORDER_ESTIMATED_TIME_UPDATED);
+    this.socketUnsubscribers = [];
   }
 
   async load(): Promise<void> {
@@ -175,14 +177,18 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private _registerSocketListeners(): void {
     for (const event of ORDER_STATUS_EVENTS) {
-      this.socketService.on<IOrder>(event, (updatedOrder) => {
-        this._applyOrderUpdate(updatedOrder);
-      });
+      this.socketUnsubscribers.push(
+        this.socketService.on<IOrder>(event, (updatedOrder) => {
+          this._applyOrderUpdate(updatedOrder);
+        }),
+      );
     }
 
-    this.socketService.on<IOrder>(SocketEvents.ORDER_ESTIMATED_TIME_UPDATED, (updatedOrder) => {
-      this._applyOrderUpdate(updatedOrder);
-    });
+    this.socketUnsubscribers.push(
+      this.socketService.on<IOrder>(SocketEvents.ORDER_ESTIMATED_TIME_UPDATED, (updatedOrder) => {
+        this._applyOrderUpdate(updatedOrder);
+      }),
+    );
   }
 
   private _applyOrderUpdate(updatedOrder: IOrder): void {
@@ -198,7 +204,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     }
 
     const message = STATUS_MESSAGES[updatedOrder.status];
-    if (message) {
+    if (message && updatedOrder.status !== OrderStatus.COMPLETED) {
       const panelClass =
         updatedOrder.status === OrderStatus.READY
           ? 'snack-success'

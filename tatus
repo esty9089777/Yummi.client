@@ -1,0 +1,11 @@
+* [33mc68c0a3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/dev-b-admin-management[m[33m, [m[1;31morigin/feature/dev-b-navbar-role-navigation[m[33m, [m[1;31morigin/feature/dev-b-admin-management[m[33m, [m[1;32mfeature/dev-b-navbar-role-navigation[m[33m)[m feat(operations): add operations management for orders and ingredients
+* [33m5a82741[m[33m ([m[1;31morigin/feature/dev-b-dashboard-stats[m[33m, [m[1;32mfeature/dev-b-dashboard-stats[m[33m)[m feat(dashboard): add admin statistics dashboard with KPIs and most sold products
+* [33m4373a97[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m chore: disable analytics in Angular CLI configuration
+*   [33mf2a4c8b[m Merge pull request #7 from esty9089777/all-order-features
+[32m|[m[33m\[m  
+[32m|[m * [33m318a55d[m[33m ([m[1;31morigin/feature/delivery-dashboard[m[33m, [m[1;31morigin/all-order-features[m[33m)[m feat: show CUSTOMER role as always-included in employee creation form
+[32m|[m * [33m6d7d1fe[m fix(kitchen): fix status flow - button icon, socket listeners for all transitions
+[32m|[m * [33m7e7ad79[m feat(delivery): delivery dashboard and kitchen READY handoff fix
+[32m|[m * [33m05fe29e[m[33m ([m[1;31morigin/feature/socket-realtime-status[m[33m)[m feat(kitchen): full status pipeline with real-time stepper
+[32m|[m * [33m28ecb4f[m feat(socket): implement real-time Socket.IO status updates
+[32m|[m * [33ma8c0e8a[m feat(order): surface store-closed status before ordering begins
