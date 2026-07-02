@@ -51,6 +51,8 @@ export class DeliveryComponent implements OnDestroy {
   readonly successMessage = signal<string | null>(null);
   readonly completingOrderId = signal<string | null>(null);
 
+  private socketUnsubscribers: (() => void)[] = [];
+
   constructor() {
     afterNextRender(() => {
       void this.auth.ensureSessionInitialized().then(() => {
@@ -60,9 +62,10 @@ export class DeliveryComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.socketService.off(SocketEvents.ORDER_READY);
-    this.socketService.off(SocketEvents.ORDER_COMPLETED);
-    this.socketService.off(SocketEvents.ORDER_CANCELLED);
+    for (const unsubscribe of this.socketUnsubscribers) {
+      unsubscribe();
+    }
+    this.socketUnsubscribers = [];
   }
 
   async load(): Promise<void> {
@@ -84,10 +87,12 @@ export class DeliveryComponent implements OnDestroy {
     this.successMessage.set(null);
 
     try {
-      await this.orderService.updateStatus(order._id, { status: OrderStatus.COMPLETED });
-      this.orders.update((list) => list.filter((o) => o._id !== order._id));
+      const updated = await this.orderService.updateStatus(order._id, {
+        status: OrderStatus.COMPLETED,
+      });
+      this._removeFromQueue(updated._id);
       this.successMessage.set(
-        `Order #${order._id.slice(-6).toUpperCase()} marked as completed.`
+        `Order #${updated._id.slice(-6).toUpperCase()} marked as completed.`
       );
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'Failed to complete order.'));
@@ -108,34 +113,44 @@ export class DeliveryComponent implements OnDestroy {
     return `₪${price.toFixed(2)}`;
   }
 
+  private _removeFromQueue(orderId: string): void {
+    this.orders.update((list) => list.filter((order) => order._id !== orderId));
+  }
+
   private _registerSocketListeners(): void {
     // New order is READY — add it to the delivery queue.
-    this.socketService.on<IOrder>(SocketEvents.ORDER_READY, (readyOrder) => {
-      const already = this.orders().some((o) => o._id === readyOrder._id);
-      if (!already) {
-        this.orders.update((list) => [...list, readyOrder]);
-      }
+    this.socketUnsubscribers.push(
+      this.socketService.on<IOrder>(SocketEvents.ORDER_READY, (readyOrder) => {
+        const already = this.orders().some((order) => order._id === readyOrder._id);
+        if (!already) {
+          this.orders.update((list) => [...list, readyOrder]);
+        }
 
-      this.snackBar.open(
-        `Order #${readyOrder._id.slice(-6).toUpperCase()} is ready for ${this.orderTypeLabel(readyOrder.orderType).toLowerCase()}!`,
-        'Dismiss',
-        { duration: 6000, panelClass: 'snack-info', horizontalPosition: 'end', verticalPosition: 'top' },
-      );
-    });
+        this.snackBar.open(
+          `Order #${readyOrder._id.slice(-6).toUpperCase()} is ready for ${this.orderTypeLabel(readyOrder.orderType).toLowerCase()}!`,
+          'Dismiss',
+          { duration: 6000, panelClass: 'snack-info', horizontalPosition: 'end', verticalPosition: 'top' },
+        );
+      }),
+    );
 
-    // Order completed (possibly by another session) — remove from list.
-    this.socketService.on<IOrder>(SocketEvents.ORDER_COMPLETED, (completedOrder) => {
-      this.orders.update((list) => list.filter((o) => o._id !== completedOrder._id));
-    });
+    // Order completed — remove from the pending delivery queue.
+    this.socketUnsubscribers.push(
+      this.socketService.on<IOrder>(SocketEvents.ORDER_COMPLETED, (completedOrder) => {
+        this._removeFromQueue(completedOrder._id);
+      }),
+    );
 
     // Customer cancelled — remove from list.
-    this.socketService.on<IOrder>(SocketEvents.ORDER_CANCELLED, (cancelledOrder) => {
-      this.orders.update((list) => list.filter((o) => o._id !== cancelledOrder._id));
-      this.snackBar.open(
-        `Order #${cancelledOrder._id.slice(-6).toUpperCase()} was cancelled.`,
-        'Dismiss',
-        { duration: 5000, panelClass: 'snack-warn', horizontalPosition: 'end', verticalPosition: 'top' },
-      );
-    });
+    this.socketUnsubscribers.push(
+      this.socketService.on<IOrder>(SocketEvents.ORDER_CANCELLED, (cancelledOrder) => {
+        this._removeFromQueue(cancelledOrder._id);
+        this.snackBar.open(
+          `Order #${cancelledOrder._id.slice(-6).toUpperCase()} was cancelled.`,
+          'Dismiss',
+          { duration: 5000, panelClass: 'snack-warn', horizontalPosition: 'end', verticalPosition: 'top' },
+        );
+      }),
+    );
   }
 }
