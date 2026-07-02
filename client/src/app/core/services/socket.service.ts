@@ -92,9 +92,9 @@ export class SocketService {
    *
    * Multiple handlers for the same event are supported.
    */
-  on<T>(event: string, handler: (payload: T) => void): void {
+  on<T>(event: string, handler: (payload: T) => void): () => void {
     if (!this.socket) {
-      return;
+      return () => undefined;
     }
 
     const wrapped = (payload: unknown) => {
@@ -107,6 +107,23 @@ export class SocketService {
     this.handlers.get(event)!.push(wrapped as ((...args: unknown[]) => void));
 
     this.socket.on(event, wrapped);
+
+    return () => {
+      if (this.socket) {
+        this.socket.off(event, wrapped);
+      }
+      const registered = this.handlers.get(event);
+      if (!registered) {
+        return;
+      }
+      const index = registered.indexOf(wrapped as ((...args: unknown[]) => void));
+      if (index >= 0) {
+        registered.splice(index, 1);
+      }
+      if (registered.length === 0) {
+        this.handlers.delete(event);
+      }
+    };
   }
 
   /**
